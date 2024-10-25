@@ -798,21 +798,20 @@ def analyze_js(url):
 
 # العودة إلى القائمة الرئيسية أو إيقاف الأداة
 def return_to_menu():
-    print_colored("\nماذا تريد أن تفعل؟", Fore.CYAN)
-    print("1. العودة إلى القائمة الرئيسية")
-    print("2. إيقاف الأداة")
+    slow_print("\n Do you want to :", Fore.CYAN, delay=0.05)
+    print("1. Return to the checklist")
+    print("2. Terminate the program")
     
     while True:
-        choice = input(Fore.YELLOW + "اختر رقم الخيار: ").strip()
+        choice = input(Fore.YELLOW + "Choose an option:" )
         if choice == "1":
             main_menu()
             break
         elif choice == "2":
-            print_colored("شكرًا لاستخدامك الأداة ❤️", Fore.CYAN)
+            print_colored("Thank you for using the tool ❤️", Fore.CYAN)
             exit()
         else:
-            print_colored("خيار غير صحيح 🚫، يرجى إعادة الاختيار.", Fore.RED)
-
+            slow_print("Incorrect choice 🚫", Fore.RED, delay=0.02)
 
 
 # تشغيل القائمة الرئيسية
