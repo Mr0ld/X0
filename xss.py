@@ -10,8 +10,8 @@ import time
 import pyfiglet
 import random
 import sys
-import openai
-
+import ssl
+import json
 
 # Initialize colorama
 init(autoreset=True)
@@ -107,8 +107,7 @@ def enter_num():
             vuln_menu()  # Go to vulnerability scan
             break  # Exit the loop after valid input
         elif choice == '2':
-            gather_info()  # Go to information gathering
-  # Go to information gathering
+            gather_info_menu()  # Go to information gathering
             break  # Exit the loop after valid input
         else:
             print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
@@ -621,96 +620,114 @@ def get_params(url):
     params = url.split('?')[1]
     return [param.split('=')[0] for param in params.split('&')]
 
-# قائمة بالمواقع المعروفة
-known_sites = ["example.com", "google.com", "openai.com"]
-
-# دالة للتحقق من صحة عنوان الموقع
-def validate_url(url):
-    pattern = r'^(https?://)?(www\.)?([a-zA-Z0-9_-]+\.)+[a-zA-Z]{2,6}$'
-    return re.match(pattern, url) is not None
-
-# دالة لتقديم اقتراح بناءً على الروابط المتاحة باستخدام difflib
-def suggest_url(url):
-    suggestions = difflib.get_close_matches(url, known_sites, n=3, cutoff=0.6)  # عتبة تشابه 60%
-    return suggestions if suggestions else None
-
-# دالة للتحقق من عمل الموقع
-def check_site_status(url):
-    try:
-        response = requests.get(url, timeout=5)
-        if response.status_code == 200:
-            return True
-        else:
-            print_colored(f"الموقع غير متاح. حالة HTTP: {response.status_code}", Fore.RED)
-            return False
-    except requests.RequestException:
-        print_colored("الموقع غير متاح أو يوجد خطأ في الاتصال.", Fore.RED)
-        return False
-
-# التحقق من صحة البروتوكول المدخل
-def validate_protocol(protocol_choice):
-    if protocol_choice not in ['1', '2']:
-        print_colored("يرجى اختيار بروتوكول صحيح (1 لـ HTTP أو 2 لـ HTTPS)", Fore.RED)
-        return False
-    return True
+# قائمة جمع المعلومات
+def gather_info_menu():
+    print_colored("\nجمع المعلومات عن الموقع", Fore.CYAN)
+    url = input(Fore.YELLOW + "أدخل رابط الموقع بدون البروتوكول (مثل: www.example.com): " + Style.RESET_ALL)
+    print_colored("1. HTTP", Fore.GREEN)
+    print_colored("2. HTTPS", Fore.GREEN)
+    protocol_choice = input(Fore.YELLOW + "اختر البروتوكول: " + Style.RESET_ALL)
+    protocol = 'https://' if protocol_choice == '2' else 'http://'
+    target_url = protocol + url
+    gather_info(target_url)
 
 # دالة لطباعة النص بألوان
 def print_colored(text, color):
     print(color + text + Style.RESET_ALL)
 
-# إعداد مفتاح OpenAI API (قم بتحديثه بمفتاحك الخاص)
-openai.api_key = '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'  # يجب استبدالها بمفتاح API الخاص بك
-
+# جمع المعلومات عن الموقع
 def gather_info(url):
-    if not url.startswith(('http://', 'https://')):
-        url = 'http://' + url  # افتراض أن البروتوكول هو http إذا لم يكن محددًا
     print_colored(f"\nجمع المعلومات عن الموقع: {url}", Fore.CYAN)
     
     # جمع عنوان IP
     domain = url.replace('http://', '').replace('https://', '')
-    try:
-        ip = socket.gethostbyname(domain)
-        print(f"عنوان IP: {ip}")
-    except socket.gaierror:
-        print_colored(f"تعذر الحصول على عنوان IP للموقع {domain}", Fore.RED)
-        return
+    ip = socket.gethostbyname(domain)
+    print(f"عنوان IP: {ip}")
+
+    # فحص SSL
+    check_ssl(domain)
 
     # جلب معلومات السيرفر
     try:
         wsheaders = requests.get(url).headers
-        ws = wsheaders.get('Server', 'غير معروف')
+        ws = wsheaders.get('Server', 'Could Not Detect')
         print(f"Web Server: {ws}")
     except requests.RequestException as e:
         print_colored(f"خطأ في الوصول إلى {url}: {e}", Fore.RED)
     
     # كشف نوع الـ CMS
-    try:
-        cmssc = requests.get(url).text
-        if '/wp-content/' in cmssc:
-            tcms = "WordPress"
-        elif 'Joomla' in cmssc:
-            tcms = "Joomla"
-        elif 'Drupal' in requests.get(f"{url}/misc/drupal.js").text:
-            tcms = "Drupal"
-        elif '/skin/frontend/' in cmssc:
-            tcms = "Magento"
-        else:
-            tcms = "غير معروف"
-        print(f"CMS: {tcms}")
-    except requests.RequestException:
-        print_colored("تعذر تحديد نوع CMS.", Fore.YELLOW)
+    cmssc = requests.get(url).text
+    if '/wp-content/' in cmssc:
+        tcms = "WordPress"
+    elif 'Joomla' in cmssc:
+        tcms = "Joomla"
+    elif 'Drupal' in requests.get(f"{url}/misc/drupal.js").text:
+        tcms = "Drupal"
+    elif '/skin/frontend/' in cmssc:
+        tcms = "Magento"
+    else:
+        tcms = "Could Not Detect"
+    print(f"CMS: {tcms}")
 
     # فحص حماية Cloudflare
-    cloudflare_status = "غير مكتشف"
+    check_cloudflare(domain)
+
+    # فحص robots.txt
+    check_robots(url)
+
+    # معلومات WHOIS
+    check_whois(domain)
+
+    # معلومات GEO IP
+    check_geoip(domain)
+
+    # فحص DNS
+    check_dns(domain)
+
+    # حساب Subnet
+    check_subnet(domain)
+
+    # فحص المنافذ باستخدام Nmap
+    check_ports(ip)
+
+    # فحص الرؤوس الأمنية الأساسية
+    check_security_headers(wsheaders)
+
+    # البحث عن المعلومات باستخدام IBM Watson NLU
+    gather_additional_info(url)
+
+    # البحث عن عناوين البريد الإلكتروني وأرقام الهواتف
+    extract_emails_and_phones(url)
+
+    # تحليل ملفات JavaScript
+    analyze_js(url)
+
+    # العودة إلى القائمة الرئيسية بعد انتهاء الفحص
+    return_to_menu()
+
+# فحص SSL
+def check_ssl(domain):
+    try:
+        context = ssl.create_default_context()
+        with context.wrap_socket(socket.socket(), server_hostname=domain) as s:
+            s.connect((domain, 443))
+            cert = s.getpeercert()
+            print(f"SSL Certificate Expiry: {cert['notAfter']}")
+    except Exception as e:
+        print_colored(f"SSL Certificate check failed: {e}", Fore.RED)
+
+# فحص حماية Cloudflare
+def check_cloudflare(domain):
     try:
         urlhh = f"http://api.hackertarget.com/httpheaders/?q={domain}"
         resulthh = requests.get(urlhh).text
-        cloudflare_status = "مكتشف" if 'cloudflare' in resulthh else "غير مكتشف"
-    except requests.RequestException:
-        print_colored("خطأ أثناء فحص Cloudflare", Fore.RED)
-    print(f"Cloudflare: {cloudflare_status}")
+        cloudflare_status = "Detected" if 'cloudflare' in resulthh else "Not Detected"
+        print(f"Cloudflare: {cloudflare_status}")
+    except Exception as e:
+        print_colored(f"خطأ أثناء فحص Cloudflare: {e}", Fore.RED)
 
-    # فحص robots.txt
+# فحص robots.txt
+def check_robots(url):
     rbturl = f"{url}/robots.txt"
     try:
         rbtresponse = requests.get(rbturl).text
@@ -718,101 +735,79 @@ def gather_info(url):
             print(f"Robots File Found:\n{rbtresponse}")
         else:
             print_colored("Robots File Found But Empty!", Fore.YELLOW)
-    except requests.RequestException:
-        print_colored("تعذر العثور على robots.txt!", Fore.RED)
+    except:
+        print_colored("Could NOT Find robots.txt!", Fore.RED)
 
-    # معلومات WHOIS
-    try:
-        urlwhois = f"http://api.hackertarget.com/whois/?q={domain}"
-        resultwhois = requests.get(urlwhois).text
-        print(f"WHOIS Lookup:\n{resultwhois}")
-    except requests.RequestException:
-        print_colored("تعذر الحصول على معلومات WHOIS", Fore.RED)
+# معلومات WHOIS
+def check_whois(domain):
+    urlwhois = f"http://api.hackertarget.com/whois/?q={domain}"
+    resultwhois = requests.get(urlwhois).text
+    print(f"WHOIS Lookup:\n{resultwhois}")
 
-    # معلومات GEO IP
-    try:
-        urlgip = f"http://api.hackertarget.com/geoip/?q={domain}"
-        resultgip = requests.get(urlgip).text
-        print(f"GEO IP Lookup:\n{resultgip}")
-    except requests.RequestException:
-        print_colored("تعذر الحصول على معلومات GEO IP", Fore.RED)
+# معلومات GEO IP
+def check_geoip(domain):
+    urlgip = f"http://api.hackertarget.com/geoip/?q={domain}"
+    resultgip = requests.get(urlgip).text
+    print(f"GEO IP Lookup:\n{resultgip}")
 
-    # فحص DNS
-    try:
-        urldlup = f"http://api.hackertarget.com/dnslookup/?q={domain}"
-        resultdlup = requests.get(urldlup).text
-        print(f"DNS Lookup:\n{resultdlup}")
-    except requests.RequestException:
-        print_colored("تعذر الحصول على معلومات DNS", Fore.RED)
+# فحص DNS
+def check_dns(domain):
+    urldlup = f"http://api.hackertarget.com/dnslookup/?q={domain}"
+    resultdlup = requests.get(urldlup).text
+    print(f"DNS Lookup:\n{resultdlup}")
 
-    # حساب Subnet
-    try:
-        urlscal = f"http://api.hackertarget.com/subnetcalc/?q={domain}"
-        resultscal = requests.get(urlscal).text
-        print(f"Subnet Calculation:\n{resultscal}")
-    except requests.RequestException:
-        print_colored("تعذر حساب Subnet", Fore.RED)
+# حساب Subnet
+def check_subnet(domain):
+    urlscal = f"http://api.hackertarget.com/subnetcalc/?q={domain}"
+    resultscal = requests.get(urlscal).text
+    print(f"Subnet Calculation:\n{resultscal}")
 
-    # فحص المنافذ باستخدام Nmap
+# فحص المنافذ باستخدام Nmap
+def check_ports(ip):
     nm = nmap.PortScanner()
+    nm.scan(ip, '1-1024')
+    print(f"\nالمنافذ المفتوحة على {ip}:")
+    for host in nm.all_hosts():
+        print(f"تفاصيل الفحص للمضيف: {host}")
+        for proto in nm[host].all_protocols():
+            print(f"البروتوكول: {proto}")
+            lport = nm[host][proto].keys()
+            for port in lport:
+                print(f"المنفذ: {port}\tالإصدار: {nm[host][proto][port]['product']}")
+
+# فحص الرؤوس الأمنية
+def check_security_headers(headers):
+    security_headers = ["X-XSS-Protection", "X-Content-Type-Options", "X-Frame-Options", "Content-Security-Policy"]
+    for header in security_headers:
+        print(f"{header}: {headers.get(header, 'Not Set')}")
+
+
+# استخراج عناوين البريد الإلكتروني وأرقام الهواتف
+def extract_emails_and_phones(url):
     try:
-        nm.scan(ip, '1-1024')
-        print(f"\nالمنافذ المفتوحة على {ip}:")
-        for host in nm.all_hosts():
-            print(f"تفاصيل الفحص للمضيف: {host}")
-            for proto in nm[host].all_protocols():
-                print(f"البروتوكول: {proto}")
-                lport = nm[host][proto].keys()
-                for port in lport:
-                    print(f"المنفذ: {port}\tالإصدار: {nm[host][proto][port].get('product', 'غير معروف')}")
-    except nmap.PortScannerError as e:
-        print_colored(f"خطأ في فحص المنافذ: {e}", Fore.RED)
+        content = requests.get(url).text
+        emails = re.findall(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", content)
+        phones = re.findall(r"\+?\d[\d -]{8,}\d", content)
+        print(f"Emails found: {emails}")
+        print(f"Phones found: {phones}")
+    except:
+        print_colored("Could not retrieve emails and phones", Fore.RED)
 
-    # استدعاء دالة الذكاء الاصطناعي لجمع المعلومات الإضافية
-    gather_ai_info(domain)
+# تحليل ملفات JavaScript
+def analyze_js(url):
+    soup = BeautifulSoup(requests.get(url).text, 'html.parser')
+    js_files = [script.get('src') for script in soup.find_all('script') if script.get('src')]
+    print(f"JavaScript files: {js_files}")
 
-    # العودة إلى القائمة الرئيسية بعد انتهاء الفحص
+# العودة إلى القائمة الرئيسية
+def return_to_menu():
     print_colored("\nهل ترغب في العودة إلى القائمة الرئيسية؟ (نعم/لا)", Fore.YELLOW)
     choice = input("اختيارك: ").strip().lower()
-    
     if choice == "نعم":
         main_menu()
     else:
         print_colored("شكرًا لاستخدامك الأداة!", Fore.CYAN)
         exit()
-
-# دالة للبحث عن المعلومات باستخدام الذكاء الاصطناعي
-def gather_ai_info(domain):
-    print_colored("\nالبحث عن معلومات إضافية باستخدام الذكاء الاصطناعي...", Fore.CYAN)
-
-    prompt = f"Can you provide more detailed information about the website {domain}? I need details such as when it was founded, its purpose, location, the company's founder, the CEO, and additional useful information."
-
-    try:
-        response = openai.Completion.create(
-            engine="text-davinci-003",
-            prompt=prompt,
-            max_tokens=300
-        )
-        ai_info = response.choices[0].text.strip()
-        print_colored(f"معلومات إضافية عن {domain}:\n{ai_info}", Fore.GREEN)
-    except Exception as e:
-                print_colored(f"خطأ أثناء جلب المعلومات من الذكاء الاصطناعي: {e}", Fore.RED)
-
-# القائمة الرئيسية
-def main_menu():
-    print_colored("مرحبًا بكم في أداة جمع المعلومات", Fore.CYAN)
-    url = input("أدخل عنوان الموقع لبدء الفحص: ").strip()
-    if validate_url(url):
-        gather_info(url)
-    else:
-        print_colored("عنوان الموقع غير صحيح!", Fore.RED)
-        suggestions = suggest_url(url)
-        if suggestions:
-            print_colored("هل تقصد أحد المواقع التالية؟", Fore.YELLOW)
-            for suggestion in suggestions:
-                print(f"- {suggestion}")
-        else:
-            print_colored("لا توجد اقتراحات متاحة.", Fore.RED)
 
 # تشغيل القائمة الرئيسية
 if __name__ == "__main__":
