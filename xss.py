@@ -10,7 +10,7 @@ import time
 import pyfiglet
 import random
 import sys
-import openai
+
 
 # Initialize colorama
 init(autoreset=True)
@@ -621,13 +621,16 @@ def get_params(url):
 
 # دالة للتحقق من صحة عنوان الموقع
 def validate_url(url):
-    pattern = r'^(https?://)?(www\.)?([a-zA-Z0-9_-]+\.)+[a-zA-Z]{2,6}$'
+    pattern = r'^(www\.)?([a-zA-Z0-9_-]+\.)+[a-zA-Z]{2,6}$'
     return re.match(pattern, url) is not None
 
 # دالة لتقديم اقتراح بناءً على الروابط المتاحة باستخدام difflib
-def suggest_url(url, known_sites):
+def suggest_url(url):
+    # استخدام get_close_matches للبحث عن الروابط المشابهة
     suggestions = difflib.get_close_matches(url, known_sites, n=3, cutoff=0.6)  # عتبة تشابه 60%
-    return suggestions if suggestions else None
+    if suggestions:
+        return suggestions
+    return None
 
 # دالة للتحقق من عمل الموقع
 def check_site_status(url):
@@ -653,21 +656,17 @@ def validate_protocol(protocol_choice):
 def print_colored(text, color):
     print(color + text + Style.RESET_ALL)
 
+
 # تعريف API Key لـ OpenAI
 openai.api_key = 'sk-bfV7dDlfuRSF05n4xEVvO9yIVrdYCls9MHTm4-dbvZT3BlbkFJkk8GEvPbJbF6pqaOsW4NKC6MyFkbu-eFfdm8WM9pIA'  # يجب استبدالها بمفتاح API الخاص بك
 
-# دالة لجمع المعلومات عن الموقع
 def gather_info(url):
     print_colored(f"\nجمع المعلومات عن الموقع: {url}", Fore.CYAN)
     
     # جمع عنوان IP
     domain = url.replace('http://', '').replace('https://', '')
-    try:
-        ip = socket.gethostbyname(domain)
-        print(f"عنوان IP: {ip}")
-    except socket.gaierror:
-        print_colored(f"تعذر العثور على IP للموقع {url}", Fore.RED)
-        return
+    ip = socket.gethostbyname(domain)
+    print(f"عنوان IP: {ip}")
 
     # جلب معلومات السيرفر
     try:
@@ -676,70 +675,61 @@ def gather_info(url):
         print(f"Web Server: {ws}")
     except requests.RequestException as e:
         print_colored(f"خطأ في الوصول إلى {url}: {e}", Fore.RED)
-
+    
     # كشف نوع الـ CMS
-    try:
-        cmssc = requests.get(url).text
-        if '/wp-content/' in cmssc:
-            tcms = "WordPress"
-        elif 'Joomla' in cmssc:
-            tcms = "Joomla"
-        elif 'Drupal' in requests.get(f"{url}/misc/drupal.js").text:
-            tcms = "Drupal"
-        elif '/skin/frontend/' in cmssc:
-            tcms = "Magento"
-        else:
-            tcms = "Could Not Detect"
-        print(f"CMS: {tcms}")
-    except requests.RequestException:
-        print_colored("تعذر الوصول لتحديد نوع CMS", Fore.RED)
+    cmssc = requests.get(url).text
+    if '/wp-content/' in cmssc:
+        tcms = "WordPress"
+    elif 'Joomla' in cmssc:
+        tcms = "Joomla"
+    elif 'Drupal' in requests.get(f"{url}/misc/drupal.js").text:
+        tcms = "Drupal"
+    elif '/skin/frontend/' in cmssc:
+        tcms = "Magento"
+    else:
+        tcms = "Could Not Detect"
+    print(f"CMS: {tcms}")
 
     # فحص حماية Cloudflare
+    cloudflare_status = "Not Detected"
     try:
         urlhh = f"http://api.hackertarget.com/httpheaders/?q={domain}"
         resulthh = requests.get(urlhh).text
         cloudflare_status = "Detected" if 'cloudflare' in resulthh else "Not Detected"
-        print(f"Cloudflare: {cloudflare_status}")
     except Exception as e:
         print_colored(f"خطأ أثناء فحص Cloudflare: {e}", Fore.RED)
+    print(f"Cloudflare: {cloudflare_status}")
 
     # فحص robots.txt
+    rbturl = f"{url}/robots.txt"
     try:
-        rbtresponse = requests.get(f"{url}/robots.txt").text
+        rbtresponse = requests.get(rbturl).text
         if rbtresponse:
             print(f"Robots File Found:\n{rbtresponse}")
         else:
             print_colored("Robots File Found But Empty!", Fore.YELLOW)
-    except requests.RequestException:
+    except:
         print_colored("Could NOT Find robots.txt!", Fore.RED)
 
     # معلومات WHOIS
-    try:
-        resultwhois = requests.get(f"http://api.hackertarget.com/whois/?q={domain}").text
-        print(f"WHOIS Lookup:\n{resultwhois}")
-    except requests.RequestException:
-        print_colored("Could NOT Retrieve WHOIS Information!", Fore.RED)
+    urlwhois = f"http://api.hackertarget.com/whois/?q={domain}"
+    resultwhois = requests.get(urlwhois).text
+    print(f"WHOIS Lookup:\n{resultwhois}")
 
     # معلومات GEO IP
-    try:
-        resultgip = requests.get(f"http://api.hackertarget.com/geoip/?q={domain}").text
-        print(f"GEO IP Lookup:\n{resultgip}")
-    except requests.RequestException:
-        print_colored("Could NOT Retrieve GEO IP Information!", Fore.RED)
+    urlgip = f"http://api.hackertarget.com/geoip/?q={domain}"
+    resultgip = requests.get(urlgip).text
+    print(f"GEO IP Lookup:\n{resultgip}")
 
     # فحص DNS
-    try:
-        resultdlup = requests.get(f"http://api.hackertarget.com/dnslookup/?q={domain}").text
-        print(f"DNS Lookup:\n{resultdlup}")
-    except requests.RequestException:
-        print_colored("Could NOT Retrieve DNS Information!", Fore.RED)
+    urldlup = f"http://api.hackertarget.com/dnslookup/?q={domain}"
+    resultdlup = requests.get(urldlup).text
+    print(f"DNS Lookup:\n{resultdlup}")
 
     # حساب Subnet
-    try:
-        resultscal = requests.get(f"http://api.hackertarget.com/subnetcalc/?q={domain}").text
-        print(f"Subnet Calculation:\n{resultscal}")
-    except requests.RequestException:
-        print_colored("Could NOT Retrieve Subnet Information!", Fore.RED)
+    urlscal = f"http://api.hackertarget.com/subnetcalc/?q={domain}"
+    resultscal = requests.get(urlscal).text
+    print(f"Subnet Calculation:\n{resultscal}")
 
     # فحص المنافذ باستخدام Nmap
     nm = nmap.PortScanner()
@@ -767,6 +757,7 @@ def gather_info(url):
         print_colored("شكرًا لاستخدامك الأداة!", Fore.CYAN)
         exit()
 
+
 # دالة للبحث عن المعلومات باستخدام الذكاء الاصطناعي
 def gather_ai_info(domain):
     print_colored("\nالبحث عن معلومات إضافية باستخدام الذكاء الاصطناعي...", Fore.CYAN)
@@ -788,8 +779,5 @@ def gather_ai_info(domain):
         print_colored(f"خطأ أثناء جلب المعلومات من الذكاء الاصطناعي: {e}", Fore.RED)
 
 # تشغيل القائمة الرئيسية
-def main_menu():
-    print_colored("هذا هو القائمة الرئيسية", Fore.CYAN)
-
 if __name__ == "__main__":
     main_menu()
