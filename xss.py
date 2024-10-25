@@ -621,6 +621,9 @@ def get_params(url):
     params = url.split('?')[1]
     return [param.split('=')[0] for param in params.split('&')]
 
+# قائمة بالمواقع المعروفة
+known_sites = ["example.com", "google.com", "openai.com"]
+
 # دالة للتحقق من صحة عنوان الموقع
 def validate_url(url):
     pattern = r'^(www\.)?([a-zA-Z0-9_-]+\.)+[a-zA-Z]{2,6}$'
@@ -658,48 +661,54 @@ def validate_protocol(protocol_choice):
 def print_colored(text, color):
     print(color + text + Style.RESET_ALL)
 
-
-# تعريف API Key لـ OpenAI
-openai.api_key = 'sk-HdEgnN3eHurV9SXpTi1qER3u_G8-30vJSyPtnOOjpzT3BlbkFJxqKZYfIZKtUU7Tf2Ylb7mPjca5bY-1EVSjNuU4a6AA'  # يجب استبدالها بمفتاح API الخاص بك
+# تعريف API Key لـ OpenAI (يجب استبدالها بمفتاح API الخاص بك)
+openai.api_key = 'YOUR_OPENAI_API_KEY'  # يجب استبدالها بمفتاح API الخاص بك
 
 def gather_info(url):
     print_colored(f"\nجمع المعلومات عن الموقع: {url}", Fore.CYAN)
     
     # جمع عنوان IP
     domain = url.replace('http://', '').replace('https://', '')
-    ip = socket.gethostbyname(domain)
-    print(f"عنوان IP: {ip}")
+    try:
+        ip = socket.gethostbyname(domain)
+        print(f"عنوان IP: {ip}")
+    except socket.gaierror:
+        print_colored(f"تعذر الحصول على عنوان IP للموقع {domain}", Fore.RED)
+        return
 
     # جلب معلومات السيرفر
     try:
         wsheaders = requests.get(url).headers
-        ws = wsheaders.get('Server', 'Could Not Detect')
+        ws = wsheaders.get('Server', 'غير معروف')
         print(f"Web Server: {ws}")
     except requests.RequestException as e:
         print_colored(f"خطأ في الوصول إلى {url}: {e}", Fore.RED)
     
     # كشف نوع الـ CMS
-    cmssc = requests.get(url).text
-    if '/wp-content/' in cmssc:
-        tcms = "WordPress"
-    elif 'Joomla' in cmssc:
-        tcms = "Joomla"
-    elif 'Drupal' in requests.get(f"{url}/misc/drupal.js").text:
-        tcms = "Drupal"
-    elif '/skin/frontend/' in cmssc:
-        tcms = "Magento"
-    else:
-        tcms = "Could Not Detect"
-    print(f"CMS: {tcms}")
+    try:
+        cmssc = requests.get(url).text
+        if '/wp-content/' in cmssc:
+            tcms = "WordPress"
+        elif 'Joomla' in cmssc:
+            tcms = "Joomla"
+        elif 'Drupal' in requests.get(f"{url}/misc/drupal.js").text:
+            tcms = "Drupal"
+        elif '/skin/frontend/' in cmssc:
+            tcms = "Magento"
+        else:
+            tcms = "غير معروف"
+        print(f"CMS: {tcms}")
+    except requests.RequestException:
+        print_colored("تعذر تحديد نوع CMS.", Fore.YELLOW)
 
     # فحص حماية Cloudflare
-    cloudflare_status = "Not Detected"
+    cloudflare_status = "غير مكتشف"
     try:
         urlhh = f"http://api.hackertarget.com/httpheaders/?q={domain}"
         resulthh = requests.get(urlhh).text
-        cloudflare_status = "Detected" if 'cloudflare' in resulthh else "Not Detected"
-    except Exception as e:
-        print_colored(f"خطأ أثناء فحص Cloudflare: {e}", Fore.RED)
+        cloudflare_status = "مكتشف" if 'cloudflare' in resulthh else "غير مكتشف"
+    except requests.RequestException:
+        print_colored("خطأ أثناء فحص Cloudflare", Fore.RED)
     print(f"Cloudflare: {cloudflare_status}")
 
     # فحص robots.txt
@@ -710,41 +719,55 @@ def gather_info(url):
             print(f"Robots File Found:\n{rbtresponse}")
         else:
             print_colored("Robots File Found But Empty!", Fore.YELLOW)
-    except:
-        print_colored("Could NOT Find robots.txt!", Fore.RED)
+    except requests.RequestException:
+        print_colored("تعذر العثور على robots.txt!", Fore.RED)
 
     # معلومات WHOIS
-    urlwhois = f"http://api.hackertarget.com/whois/?q={domain}"
-    resultwhois = requests.get(urlwhois).text
-    print(f"WHOIS Lookup:\n{resultwhois}")
+    try:
+        urlwhois = f"http://api.hackertarget.com/whois/?q={domain}"
+        resultwhois = requests.get(urlwhois).text
+        print(f"WHOIS Lookup:\n{resultwhois}")
+    except requests.RequestException:
+        print_colored("تعذر الحصول على معلومات WHOIS", Fore.RED)
 
     # معلومات GEO IP
-    urlgip = f"http://api.hackertarget.com/geoip/?q={domain}"
-    resultgip = requests.get(urlgip).text
-    print(f"GEO IP Lookup:\n{resultgip}")
+    try:
+        urlgip = f"http://api.hackertarget.com/geoip/?q={domain}"
+        resultgip = requests.get(urlgip).text
+        print(f"GEO IP Lookup:\n{resultgip}")
+    except requests.RequestException:
+        print_colored("تعذر الحصول على معلومات GEO IP", Fore.RED)
 
     # فحص DNS
-    urldlup = f"http://api.hackertarget.com/dnslookup/?q={domain}"
-    resultdlup = requests.get(urldlup).text
-    print(f"DNS Lookup:\n{resultdlup}")
+    try:
+        urldlup = f"http://api.hackertarget.com/dnslookup/?q={domain}"
+        resultdlup = requests.get(urldlup).text
+        print(f"DNS Lookup:\n{resultdlup}")
+    except requests.RequestException:
+        print_colored("تعذر الحصول على معلومات DNS", Fore.RED)
 
     # حساب Subnet
-    urlscal = f"http://api.hackertarget.com/subnetcalc/?q={domain}"
-    resultscal = requests.get(urlscal).text
-    print(f"Subnet Calculation:\n{resultscal}")
+    try:
+        urlscal = f"http://api.hackertarget.com/subnetcalc/?q={domain}"
+        resultscal = requests.get(urlscal).text
+        print(f"Subnet Calculation:\n{resultscal}")
+    except requests.RequestException:
+        print_colored("تعذر حساب Subnet", Fore.RED)
 
     # فحص المنافذ باستخدام Nmap
     nm = nmap.PortScanner()
-    nm.scan(ip, '1-1024')
-    print(f"\nالمنافذ المفتوحة على {ip}:")
-    
-    for host in nm.all_hosts():
-        print(f"تفاصيل الفحص للمضيف: {host}")
-        for proto in nm[host].all_protocols():
-            print(f"البروتوكول: {proto}")
-            lport = nm[host][proto].keys()
-            for port in lport:
-                print(f"المنفذ: {port}\tالإصدار: {nm[host][proto][port]['product']}")
+    try:
+        nm.scan(ip, '1-1024')
+        print(f"\nالمنافذ المفتوحة على {ip}:")
+        for host in nm.all_hosts():
+            print(f"تفاصيل الفحص للمضيف: {host}")
+            for proto in nm[host].all_protocols():
+                print(f"البروتوكول: {proto}")
+                lport = nm[host][proto].keys()
+                for port in lport:
+                    print(f"المنفذ: {port}\tالإصدار: {nm[host][proto][port].get('product', 'غير معروف')}")
+    except nmap.PortScannerError as e:
+        print_colored(f"خطأ في فحص المنافذ: {e}", Fore.RED)
 
     # استدعاء دالة الذكاء الاصطناعي لجمع المعلومات الإضافية
     gather_ai_info(domain)
@@ -759,7 +782,6 @@ def gather_info(url):
         print_colored("شكرًا لاستخدامك الأداة!", Fore.CYAN)
         exit()
 
-
 # دالة للبحث عن المعلومات باستخدام الذكاء الاصطناعي
 def gather_ai_info(domain):
     print_colored("\nالبحث عن معلومات إضافية باستخدام الذكاء الاصطناعي...", Fore.CYAN)
@@ -769,16 +791,30 @@ def gather_ai_info(domain):
 
     try:
         response = openai.Completion.create(
-            engine="text-davinci-003",  # اختر النموذج الذي تريد استخدامه
+            engine="text-davinci-003",
             prompt=prompt,
-            max_tokens=300  # الحد الأقصى لطول الإجابة
+            max_tokens=300
         )
-
         ai_info = response.choices[0].text.strip()
         print_colored(f"معلومات إضافية عن {domain}:\n{ai_info}", Fore.GREEN)
-
     except Exception as e:
         print_colored(f"خطأ أثناء جلب المعلومات من الذكاء الاصطناعي: {e}", Fore.RED)
+
+# القائمة الرئيسية
+def main_menu():
+    print_colored("مرحبًا بكم في أداة جمع المعلومات", Fore.CYAN)
+    url = input("أدخل عنوان الموقع لبدء الفحص: ").strip()
+    if validate_url(url):
+        gather_info(url)
+    else:
+        print_colored("عنوان الموقع غير صحيح!", Fore.RED)
+        suggestions = suggest_url(url)
+        if suggestions:
+            print_colored("هل تقصد أحد المواقع التالية؟", Fore.YELLOW)
+            for suggestion in suggestions:
+                print(f"- {suggestion}")
+        else:
+            print_colored("لا توجد اقتراحات متاحة.", Fore.RED)
 
 # تشغيل القائمة الرئيسية
 if __name__ == "__main__":
