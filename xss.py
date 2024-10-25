@@ -474,4 +474,343 @@ def test_vulnerabilities(base_url, urls, forms, payloads, vuln_type):
                         time.sleep(1)  # انتظار قبل إعادة المحاولة
 
     # فحص الفورمات
-    for form in 
+    for form in forms:
+        action = form.get('action')
+        method = form.get('method', 'get').lower()
+        inputs = form.find_all('input')
+        action_url = requests.compat.urljoin(base_url, action) if action else base_url
+        
+        try:
+            for payload in payloads:
+                form_data = {input_tag.get('name'): payload for input_tag in inputs if input_tag.get('name')}
+                if method == 'post':
+                    response = session.post(action_url, data=form_data, timeout=10)
+                else:
+                    response = session.get(action_url, params=form_data, timeout=10)
+
+                if payload in response.text:
+                    report.append({
+                        "vuln_type": vuln_type,
+                        "form_action": action_url,
+                        "payload": payload
+                    })
+                    print_colored(f"✅ Exploit  {vuln_type} In the form that started {action_url}", Fore.RED)
+                    break  # الانتقال إلى الفورم التالي بعد اكتشاف الثغرة
+
+        except requests.exceptions.RequestException as e:
+            print_colored(f"🔴 Error checking form in link {action_url} : {e}", Fore.RED)
+
+    generate_report(report)
+
+
+
+
+# توليد تقرير مفصل عن الفحص
+def generate_report(report):
+    if report:
+        report_text = ""  # لاحتواء نص التقرير
+        for item in report:
+            if 'param' in item:
+                report_text += f"ثغرة {item['vuln_type']} مكتشفة في الباراميتر '{item['param']}' في الرابط {item['url']}\n"
+                report_text += f"رابط مباشر: {item['direct_link']}\n"
+                report_text += f"البايلود المستخدم: {item['payload']}\n\n"
+            if 'form_action' in item:
+                report_text += f"ثغرة {item['vuln_type']} مكتشفة في الفورم في الرابط {item['form_action']}\n"
+                report_text += f"البايلود المستخدم: {item['payload']}\n\n"
+
+        # سؤال المستخدم إذا كان يريد حفظ التقرير
+        print("")
+        
+        save_choice = input(Fore.YELLOW + "Do you want to save the report to a text file? (y/n) :").strip().lower()
+        
+        print("")
+        
+        if save_choice in ['y', 'yes']:
+            save_report_to_file(report_text)
+        elif save_choice in ['n', 'no']:
+            print("Thank you ❤️")
+        else:
+            print("🚫 Invalid selection. Thank you for using the tool ❤️")
+    else:
+        print_colored("🔴 No vulnerabilities were found , No Exploit ❌.", Fore.RED)
+
+# دالة لحفظ التقرير في ملف
+def save_report_to_file(report):
+    while True:
+        print("")
+        file_name = input(Fore.YELLOW + "Type the file name with the extension ( .txt ) :" + Style.RESET_ALL + "\n").strip()
+        if file_name.endswith(".txt"):
+            print("")
+            file_path = file_name
+            break
+        else:
+            print("Please make sure to add the .txt extension to the file name.", Fore.RED)
+
+    with open(file_path, "w", encoding='utf-8') as file:
+        file.write(report)
+    print(f"✅ The report has been saved to the file : {os.path.abspath(file_path)}")
+
+# دالة لطباعة النص بلون محدد (مطلوبة للوظائف)
+def print_colored(text, color):
+    print(color + text + Fore.RESET)
+
+
+# الزحف واختبار الثغرات (محدث)
+def crawl_and_test(url, payloads, vuln_type):
+    print_colored(f" {url}", Fore.CYAN)
+    crawled_urls, forms = crawl_site(url)
+
+    # فحص الروابط والفورمز بشكل كامل واستخدام جميع البايلودات
+    print_colored(f"\n Check the link for vulnerabilities. {vuln_type}...", Fore.CYAN)
+    test_vulnerabilities(url, crawled_urls, forms, payloads, vuln_type)
+
+
+# الزحف واختبار CSRF (مطور)
+def crawl_and_test_csrf(url):
+    print(f" {url}")
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    
+    forms = soup.find_all('form')
+    csrf_vulns = []
+
+    for form in forms:
+        action = form.get('action')
+        form_url = url + action if action else url
+        inputs = form.find_all('input')
+
+        has_csrf_token = False
+
+        # التحقق من وجود حقل CSRF في الفورم
+        for input_tag in inputs:
+            input_name = input_tag.get('name')
+            if 'csrf' in input_name.lower() or 'token' in input_name.lower():
+                has_csrf_token = True
+
+        # التحقق من وجود meta tag للـ CSRF
+        csrf_meta = soup.find('meta', {'name': 'csrf-token'})
+        if csrf_meta:
+            has_csrf_token = True
+
+        # التحقق من هيدر SameSite
+        cookies = response.headers.get('Set-Cookie', '')
+        if 'SameSite' not in cookies:
+            print_colored(f"🔴 warning : The site is not used SameSite To protect the site from a vulnerability => CSRF", Fore.YELLOW)
+
+        # التحقق من هيدر Referer
+        if 'Referer' not in response.headers:
+            print_colored(f"🔴 Warning : The site does not check the referrer header for CSRF protection .", Fore.YELLOW)
+
+        # إذا لم يتم العثور على رمز CSRF
+        if not has_csrf_token:
+            csrf_vulns.append(form_url)
+
+    if csrf_vulns:
+        print_colored("⚠️ The site may be vulnerable to CSRF ", Fore.RED)
+        for vuln in csrf_vulns:
+            print(f"📍The site may have a CSRF vulnerability in this link : {vuln}")
+    else:
+        print_colored("🔰The site is not infected with CSRF vulnerability", Fore.GREEN)
+
+
+# استخراج البارامترات من الروابط
+def get_params(url):
+    if '?' not in url:
+        return []
+    params = url.split('?')[1]
+    return [param.split('=')[0] for param in params.split('&')]
+
+# قائمة جمع المعلومات
+def gather_info_menu():
+    print_colored("\nجمع المعلومات عن الموقع", Fore.CYAN)
+    url = input(Fore.YELLOW + "أدخل رابط الموقع بدون البروتوكول (مثل: www.example.com): " + Style.RESET_ALL)
+    print_colored("1. HTTP", Fore.GREEN)
+    print_colored("2. HTTPS", Fore.GREEN)
+    protocol_choice = input(Fore.YELLOW + "اختر البروتوكول: " + Style.RESET_ALL)
+    protocol = 'https://' if protocol_choice == '2' else 'http://'
+    target_url = protocol + url
+    gather_info(target_url)
+
+# دالة لطباعة النص بألوان
+def print_colored(text, color):
+    print(color + text + Style.RESET_ALL)
+
+# جمع المعلومات عن الموقع
+def gather_info(url):
+    print_colored(f"\nجمع المعلومات عن الموقع: {url}", Fore.CYAN)
+    
+    # جمع عنوان IP
+    domain = url.replace('http://', '').replace('https://', '')
+    ip = socket.gethostbyname(domain)
+    print(f"عنوان IP: {ip}")
+
+    # فحص SSL
+    check_ssl(domain)
+
+    # جلب معلومات السيرفر
+    try:
+        wsheaders = requests.get(url).headers
+        ws = wsheaders.get('Server', 'Could Not Detect')
+        print(f"Web Server: {ws}")
+    except requests.RequestException as e:
+        print_colored(f"خطأ في الوصول إلى {url}: {e}", Fore.RED)
+    
+    # كشف نوع الـ CMS
+    cmssc = requests.get(url).text
+    if '/wp-content/' in cmssc:
+        tcms = "WordPress"
+    elif 'Joomla' in cmssc:
+        tcms = "Joomla"
+    elif 'Drupal' in requests.get(f"{url}/misc/drupal.js").text:
+        tcms = "Drupal"
+    elif '/skin/frontend/' in cmssc:
+        tcms = "Magento"
+    else:
+        tcms = "Could Not Detect"
+    print(f"CMS: {tcms}")
+
+    # فحص حماية Cloudflare
+    check_cloudflare(domain)
+
+    # فحص robots.txt
+    check_robots(url)
+
+    # معلومات WHOIS
+    check_whois(domain)
+
+    # معلومات GEO IP
+    check_geoip(domain)
+
+    # فحص DNS
+    check_dns(domain)
+
+    # حساب Subnet
+    check_subnet(domain)
+
+    # فحص المنافذ باستخدام Nmap
+    check_ports(ip)
+
+    # فحص الرؤوس الأمنية الأساسية
+    check_security_headers(wsheaders)
+
+    # البحث عن عناوين البريد الإلكتروني وأرقام الهواتف
+    extract_emails_and_phones(url)
+
+    # تحليل ملفات JavaScript
+    analyze_js(url)
+
+    # العودة إلى القائمة الرئيسية بعد انتهاء الفحص
+    return_to_menu()
+
+# فحص SSL
+def check_ssl(domain):
+    try:
+        context = ssl.create_default_context()
+        with context.wrap_socket(socket.socket(), server_hostname=domain) as s:
+            s.connect((domain, 443))
+            cert = s.getpeercert()
+            print(f"SSL Certificate Expiry: {cert['notAfter']}")
+    except Exception as e:
+        print_colored(f"SSL Certificate check failed: {e}", Fore.RED)
+
+# فحص حماية Cloudflare
+def check_cloudflare(domain):
+    try:
+        urlhh = f"http://api.hackertarget.com/httpheaders/?q={domain}"
+        resulthh = requests.get(urlhh).text
+        cloudflare_status = "Detected" if 'cloudflare' in resulthh else "Not Detected"
+        print(f"Cloudflare: {cloudflare_status}")
+    except Exception as e:
+        print_colored(f"خطأ أثناء فحص Cloudflare: {e}", Fore.RED)
+
+# فحص robots.txt
+def check_robots(url):
+    rbturl = f"{url}/robots.txt"
+    try:
+        rbtresponse = requests.get(rbturl).text
+        if rbtresponse:
+            print(f"Robots File Found:\n{rbtresponse}")
+        else:
+            print_colored("Robots File Found But Empty!", Fore.YELLOW)
+    except:
+        print_colored("Could NOT Find robots.txt!", Fore.RED)
+
+# معلومات WHOIS
+def check_whois(domain):
+    urlwhois = f"http://api.hackertarget.com/whois/?q={domain}"
+    resultwhois = requests.get(urlwhois).text
+    print(f"WHOIS Lookup:\n{resultwhois}")
+
+# معلومات GEO IP
+def check_geoip(domain):
+    urlgip = f"http://api.hackertarget.com/geoip/?q={domain}"
+    resultgip = requests.get(urlgip).text
+    print(f"GEO IP Lookup:\n{resultgip}")
+
+# فحص DNS
+def check_dns(domain):
+    urldlup = f"http://api.hackertarget.com/dnslookup/?q={domain}"
+    resultdlup = requests.get(urldlup).text
+    print(f"DNS Lookup:\n{resultdlup}")
+
+# حساب Subnet
+def check_subnet(domain):
+    urlscal = f"http://api.hackertarget.com/subnetcalc/?q={domain}"
+    resultscal = requests.get(urlscal).text
+    print(f"Subnet Calculation:\n{resultscal}")
+
+# فحص المنافذ باستخدام Nmap
+def check_ports(ip):
+    nm = nmap.PortScanner()
+    nm.scan(ip, '1-1024')
+    print(f"\nالمنافذ المفتوحة على {ip}:")
+    for host in nm.all_hosts():
+        print(f"تفاصيل الفحص للمضيف: {host}")
+        for proto in nm[host].all_protocols():
+            print(f"البروتوكول: {proto}")
+            lport = nm[host][proto].keys()
+            for port in lport:
+                print(f"المنفذ: {port}\tالإصدار: {nm[host][proto][port]['product']}")
+
+# فحص الرؤوس الأمنية
+def check_security_headers(headers):
+    security_headers = ["X-XSS-Protection", "X-Content-Type-Options", "X-Frame-Options", "Content-Security-Policy"]
+    for header in security_headers:
+        print(f"{header}: {headers.get(header, 'Not Set')}")
+
+
+# استخراج عناوين البريد الإلكتروني وأرقام الهواتف
+def extract_emails_and_phones(url):
+    try:
+        content = requests.get(url).text
+        emails = re.findall(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", content)
+        phones = re.findall(r"\+?\d[\d -]{8,}\d", content)
+        print(f"Emails found: {emails}")
+        print(f"Phones found: {phones}")
+    except:
+        print_colored("Could not retrieve emails and phones", Fore.RED)
+
+# تحليل ملفات JavaScript
+def analyze_js(url):
+    soup = BeautifulSoup(requests.get(url).text, 'html.parser')
+    js_files = [script.get('src') for script in soup.find_all('script') if script.get('src')]
+    print(f"JavaScript files: {js_files}")
+
+# العودة إلى القائمة الرئيسية
+def return_to_menu():
+    print_colored("\nهل ترغب في العودة إلى القائمة الرئيسية؟ (Yes/y أو No/n)", Fore.YELLOW)
+    while True:
+        choice = input("اختيارك: ").strip().lower()
+        if choice in ["yes", "y"]:
+            main_menu()
+            break
+        elif choice in ["no", "n"]:
+            print_colored("شكرًا لاستخدامك الأداة ❤️", Fore.CYAN)
+            exit()
+        else:
+            print_colored("خيار غير صحيح 🚫، يرجى إعادة الإدخال.", Fore.RED)
+
+
+# تشغيل القائمة الرئيسية
+if __name__ == "__main__":
+    main_menu()
