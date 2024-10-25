@@ -662,7 +662,7 @@ def print_colored(text, color):
     print(color + text + Style.RESET_ALL)
 
 # تعريف API Key لـ OpenAI (يجب استبدالها بمفتاح API الخاص بك)
-openai.api_key = 'YOUR_OPENAI_API_KEY'  # يجب استبدالها بمفتاح API الخاص بك
+openai.api_key = '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'  # يجب استبدالها بمفتاح API الخاص بك
 
 def gather_info(url):
     print_colored(f"\nجمع المعلومات عن الموقع: {url}", Fore.CYAN)
