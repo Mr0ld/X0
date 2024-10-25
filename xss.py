@@ -796,19 +796,23 @@ def analyze_js(url):
     js_files = [script.get('src') for script in soup.find_all('script') if script.get('src')]
     print(f"JavaScript files: {js_files}")
 
-# العودة إلى القائمة الرئيسية
+# العودة إلى القائمة الرئيسية أو إيقاف الأداة
 def return_to_menu():
-    print_colored("\nهل ترغب في العودة إلى القائمة الرئيسية؟ (Yes/y أو No/n)", Fore.YELLOW)
+    print_colored("\nماذا تريد أن تفعل؟", Fore.CYAN)
+    print("1. العودة إلى القائمة الرئيسية")
+    print("2. إيقاف الأداة")
+    
     while True:
-        choice = input("اختيارك: ").strip().lower()
-        if choice in ["yes", "y"]:
+        choice = input(Fore.YELLOW + "اختر رقم الخيار: ").strip()
+        if choice == "1":
             main_menu()
             break
-        elif choice in ["no", "n"]:
+        elif choice == "2":
             print_colored("شكرًا لاستخدامك الأداة ❤️", Fore.CYAN)
             exit()
         else:
-            print_colored("خيار غير صحيح 🚫، يرجى إعادة الإدخال.", Fore.RED)
+            print_colored("خيار غير صحيح 🚫، يرجى إعادة الاختيار.", Fore.RED)
+
 
 
 # تشغيل القائمة الرئيسية
