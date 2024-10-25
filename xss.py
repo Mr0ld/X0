@@ -626,16 +626,13 @@ known_sites = ["example.com", "google.com", "openai.com"]
 
 # دالة للتحقق من صحة عنوان الموقع
 def validate_url(url):
-    pattern = r'^(www\.)?([a-zA-Z0-9_-]+\.)+[a-zA-Z]{2,6}$'
+    pattern = r'^(https?://)?(www\.)?([a-zA-Z0-9_-]+\.)+[a-zA-Z]{2,6}$'
     return re.match(pattern, url) is not None
 
 # دالة لتقديم اقتراح بناءً على الروابط المتاحة باستخدام difflib
 def suggest_url(url):
-    # استخدام get_close_matches للبحث عن الروابط المشابهة
     suggestions = difflib.get_close_matches(url, known_sites, n=3, cutoff=0.6)  # عتبة تشابه 60%
-    if suggestions:
-        return suggestions
-    return None
+    return suggestions if suggestions else None
 
 # دالة للتحقق من عمل الموقع
 def check_site_status(url):
@@ -661,10 +658,12 @@ def validate_protocol(protocol_choice):
 def print_colored(text, color):
     print(color + text + Style.RESET_ALL)
 
-# تعريف API Key لـ OpenAI (يجب استبدالها بمفتاح API الخاص بك)
-openai.api_key = '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'  # يجب استبدالها بمفتاح API الخاص بك
+# إعداد مفتاح OpenAI API (قم بتحديثه بمفتاحك الخاص)
+openai.api_key = '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'  # يجب استبدالها بمفتاح API الخاص بك
 
 def gather_info(url):
+    if not url.startswith(('http://', 'https://')):
+        url = 'http://' + url  # افتراض أن البروتوكول هو http إذا لم يكن محددًا
     print_colored(f"\nجمع المعلومات عن الموقع: {url}", Fore.CYAN)
     
     # جمع عنوان IP
@@ -786,7 +785,6 @@ def gather_info(url):
 def gather_ai_info(domain):
     print_colored("\nالبحث عن معلومات إضافية باستخدام الذكاء الاصطناعي...", Fore.CYAN)
 
-    # إنشاء استعلام للذكاء الاصطناعي لجمع المعلومات عن الموقع
     prompt = f"Can you provide more detailed information about the website {domain}? I need details such as when it was founded, its purpose, location, the company's founder, the CEO, and additional useful information."
 
     try:
@@ -798,7 +796,7 @@ def gather_ai_info(domain):
         ai_info = response.choices[0].text.strip()
         print_colored(f"معلومات إضافية عن {domain}:\n{ai_info}", Fore.GREEN)
     except Exception as e:
-        print_colored(f"خطأ أثناء جلب المعلومات من الذكاء الاصطناعي: {e}", Fore.RED)
+                print_colored(f"خطأ أثناء جلب المعلومات من الذكاء الاصطناعي: {e}", Fore.RED)
 
 # القائمة الرئيسية
 def main_menu():
