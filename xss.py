@@ -693,9 +693,6 @@ def gather_info(url):
     # فحص الرؤوس الأمنية الأساسية
     check_security_headers(wsheaders)
 
-    # البحث عن المعلومات باستخدام IBM Watson NLU
-    gather_additional_info(url)
-
     # البحث عن عناوين البريد الإلكتروني وأرقام الهواتف
     extract_emails_and_phones(url)
 
