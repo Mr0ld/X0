@@ -10,6 +10,7 @@ import time
 import pyfiglet
 import random
 import sys
+import openai
 
 
 # Initialize colorama
@@ -658,7 +659,7 @@ def print_colored(text, color):
 
 
 # تعريف API Key لـ OpenAI
-openai.api_key = 'sk-bfV7dDlfuRSF05n4xEVvO9yIVrdYCls9MHTm4-dbvZT3BlbkFJkk8GEvPbJbF6pqaOsW4NKC6MyFkbu-eFfdm8WM9pIA'  # يجب استبدالها بمفتاح API الخاص بك
+openai.api_key = 'sk-HdEgnN3eHurV9SXpTi1qER3u_G8-30vJSyPtnOOjpzT3BlbkFJxqKZYfIZKtUU7Tf2Ylb7mPjca5bY-1EVSjNuU4a6AA'  # يجب استبدالها بمفتاح API الخاص بك
 
 def gather_info(url):
     print_colored(f"\nجمع المعلومات عن الموقع: {url}", Fore.CYAN)
