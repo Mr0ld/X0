@@ -396,15 +396,17 @@ def post_scan_options():
     print("1. Return to the checklist")
     print("2. Terminate the program")
     
-    choice = input(Fore.YELLOW + "Choose an option:" )
-    if choice == '1':
-        main_menu()
-    elif choice == '2':
-        print_colored("Thank you for using the tool ❤️", Fore.CYAN)
-        exit()
-    else:
-        slow_print("Incorrect choice 🚫", Fore.RED, delay=0.02)
-        post_scan_options()
+    while True:
+        choice = input(Fore.YELLOW + "Choose an option: ")
+        if choice == '1':
+            main_menu()
+            break
+        elif choice == '2':
+            print_colored("Thank you for using the tool ❤️", Fore.CYAN)
+            exit()
+        else:
+            slow_print("Incorrect choice 🚫 Please choose a valid option.", Fore.RED, delay=0.01)
+
 
 
 # الزحف واختبار الثغرات
@@ -620,16 +622,70 @@ def get_params(url):
     params = url.split('?')[1]
     return [param.split('=')[0] for param in params.split('&')]
 
+# التحقق من أن الموقع يعمل
+def check_site_status(url):
+    try:
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            return True
+        else:
+            print_colored(f"The site is unavailable. HTTP Status: {response.status_code}", Fore.RED)
+            return False
+    except requests.RequestException:
+        print_colored("The site is unavailable or there is a connection error.", Fore.RED)
+        return False
+
+# التحقق من صحة اختيار البروتوكول
+def validate_protocol(protocol_choice):
+    if protocol_choice not in ['1', '2']:
+        print_colored("Please choose a valid protocol (1 for HTTP or 2 for HTTPS)", Fore.RED)
+        return False
+    return True
+
 # قائمة جمع المعلومات
 def gather_info_menu():
-    print_colored("\nجمع المعلومات عن الموقع", Fore.CYAN)
-    url = input(Fore.YELLOW + "أدخل رابط الموقع بدون البروتوكول (مثل: www.example.com): " + Style.RESET_ALL)
-    print_colored("1. HTTP", Fore.GREEN)
-    print_colored("2. HTTPS", Fore.GREEN)
-    protocol_choice = input(Fore.YELLOW + "اختر البروتوكول: " + Style.RESET_ALL)
+    print_colored("\nCollect information about site", Fore.CYAN)
+
+    # التحقق من صحة الرابط المدخل
+    while True:
+        url = input(Fore.YELLOW + "Enter the site link without the protocol (e.g., example.com): " + Style.RESET_ALL + "\n")
+        
+        # تحقق مما إذا كان الرابط يحتوي على بروتوكول
+        if url.startswith("http://") or url.startswith("https://"):
+            print_colored("Please enter the site link without the protocol.", Fore.RED)
+        elif validate_url(url):
+            break
+        else:
+            print_colored("Invalid link. Please enter a valid link.", Fore.RED)
+
+    # التحقق من صحة البروتوكول المدخل
+    while True:
+        print_colored("1. HTTP", Fore.GREEN)
+        print_colored("2. HTTPS", Fore.GREEN)
+        protocol_choice = input(Fore.YELLOW + "Choose the protocol: " + Style.RESET_ALL + "\n")
+        if validate_protocol(protocol_choice):
+            break
+
     protocol = 'https://' if protocol_choice == '2' else 'http://'
     target_url = protocol + url
+
+    # التحقق من أن الموقع يعمل
+    while True:
+        if check_site_status(target_url):
+            break
+        else:
+            url = input(Fore.YELLOW + "Enter an operational site link without the protocol (e.g., example.com): " + Style.RESET_ALL + "\n")
+            if validate_url(url):
+                target_url = protocol + url
+
+    # تنفيذ جمع المعلومات على الرابط المدخل
     gather_info(target_url)
+
+# التحقق من صحة الرابط المدخل
+def validate_url(url):
+    # التحقق من وجود نقطة في الرابط، مما يعني تنسيق مقبول
+    return "." in url
+
 
 # دالة لطباعة النص بألوان
 def print_colored(text, color):
@@ -637,7 +693,7 @@ def print_colored(text, color):
 
 # جمع المعلومات عن الموقع
 def gather_info(url):
-    print_colored(f"\nجمع المعلومات عن الموقع: {url}", Fore.CYAN)
+    print_colored(f"\n Collect information about this site : {url}", Fore.CYAN)
     
     # جمع عنوان IP
     domain = url.replace('http://', '').replace('https://', '')
@@ -811,7 +867,7 @@ def return_to_menu():
             print_colored("Thank you for using the tool ❤️", Fore.CYAN)
             exit()
         else:
-            slow_print("Incorrect choice 🚫", Fore.RED, delay=0.02)
+            slow_print("Incorrect choice 🚫 Please choose a valid option.", Fore.RED, delay=0.01)
 
 
 # تشغيل القائمة الرئيسية
