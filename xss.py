@@ -107,7 +107,8 @@ def enter_num():
             vuln_menu()  # Go to vulnerability scan
             break  # Exit the loop after valid input
         elif choice == '2':
-            gather_info_menu()  # Go to information gathering
+            gather_info()  # Go to information gathering
+  # Go to information gathering
             break  # Exit the loop after valid input
         else:
             print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
