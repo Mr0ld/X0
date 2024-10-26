@@ -898,7 +898,7 @@ def check_ports(ip):
                 state = port_info.get('state', 'Unknown')
 
                 print_colored(f"Open Port : {port} - Release : {product} - State: {state}", Fore.GREEN if product != 'Unknown' else Fore.RED)
-                
+
                 # فحص الثغرات على المنفذ
                 check_vulnerabilities(nm, host, port)
 
@@ -909,19 +909,19 @@ def check_vulnerabilities(nm, host, port):
     for script in scripts:
         try:
             print_colored(f"Checking vulnerabilities on port {port} with script: {script}...", Fore.YELLOW)
-            nm.run_script(script, arguments=f'-p {port} {host}')
+            nm.scan(host, str(port), arguments=f'--script={script}')  # استخدم scan لفحص الثغرات
             # معالجة نتائج الفحص هنا
-            if nm[host]['tcp'][port]['script']:
+            if 'script' in nm[host]['tcp'][port]:
                 for key, value in nm[host]['tcp'][port]['script'].items():
-                    print_colored(f"Vulnerability found with {key}: {value}", Fore.RED)
+                    print_colored(f"Vulnerability found with {key}: {value}", Fore.GREEN)
                     vulnerabilities_found = True
             else:
-                print_colored(f"No vulnerabilities found with script: {script}", Fore.GREEN)
+                print_colored(f"No vulnerabilities found with script: {script}", Fore.YELLOW)
         except Exception as e:
             print_colored(f"Error checking vulnerabilities: {e}", Fore.RED)
 
     if not vulnerabilities_found:
-        print_colored(f"No vulnerabilities found on port {port} after checking all scripts.", Fore.GREEN)
+        print_colored(f"No vulnerabilities found on port {port} after checking all scripts.", Fore.RED)
 
 # دالة لفحص الرؤوس الأمنية الأساسية
 def check_security_headers(headers):
