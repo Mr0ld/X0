@@ -883,9 +883,12 @@ def scan_open_ports(ip):
     while True:
         choice = input(Fore.MAGENTA + "Do you want to specify the number of ports to scan? (Yes/y or No/n) : " + Style.RESET_ALL).strip().lower()
         if choice in ['yes', 'y']:
-            max_ports = int(input(Fore.YELLOW + "Enter the number of ports to scan (e.g., 300): " + Style.RESET_ALL))
-            port_range = f'1-{max_ports}'
-            break
+            try:
+                max_ports = int(input(Fore.YELLOW + "Enter the number of ports to scan (e.g., 300): " + Style.RESET_ALL))
+                port_range = f'1-{max_ports}'
+                break
+            except ValueError:
+                print_colored(Fore.RED + "Please enter a valid number." + Style.RESET_ALL)
         elif choice in ['no', 'n']:
             port_range = '1-65535'
             break
@@ -921,9 +924,12 @@ def scan_ports_for_vulnerabilities(ip):
     while True:
         choice = input(Fore.MAGENTA + "Do you want to specify the number of ports to scan for vulnerabilities? (Yes/y or No/n) : " + Style.RESET_ALL).strip().lower()
         if choice in ['yes', 'y']:
-            max_ports = int(input(Fore.YELLOW + "Enter the number of ports to scan for vulnerabilities (e.g., 300): " + Style.RESET_ALL))
-            port_range = f'1-{max_ports}'
-            break
+            try:
+                max_ports = int(input(Fore.YELLOW + "Enter the number of ports to scan for vulnerabilities (e.g., 300): " + Style.RESET_ALL))
+                port_range = f'1-{max_ports}'
+                break
+            except ValueError:
+                print_colored(Fore.RED + "Please enter a valid number." + Style.RESET_ALL)
         elif choice in ['no', 'n']:
             port_range = '1-65535'
             break
@@ -985,7 +991,7 @@ def check_vulnerabilities(nm, host, port):
             print_colored(f"Error checking vulnerabilities: {e}", Fore.RED)
 
     if not vulnerabilities_found:
-        print_colored(f"No vulnerabilities found on port {port} after checking all scripts.", Fore.GREEN )
+        print_colored(f"No vulnerabilities found on port {port} after checking all scripts.", Fore.GREEN)
 
     # قائمة برؤوس الأمان الشائعة
     security_headers = {
