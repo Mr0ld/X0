@@ -862,10 +862,12 @@ def check_subnet(domain):
 
 # فحص المنافذ باستخدام Nmap
 def check_ports(ip):
+    nm = nmap.PortScanner()  # تعريف nm ككائن من nmap.PortScanner
+    
     # سؤال المستخدم عن عدد المنافذ المطلوب فحصها
-    choice = input("Do you want to specify the number of ports to scan? (Yes/y or No/n): ").strip().lower()
+    choice = input(Fore.MAGENTA + "Do you want to specify the number of ports to scan? (Yes/y or No/n) : " + Style.RESET_ALL + '')
     if choice in ['yes', 'y']:
-        max_ports = int(input("Enter the number of ports to scan (e.g., 300): "))
+        max_ports = int(input(Fore.YELLOW + "Enter the number of ports to scan (e.g., 300): " + Style.RESET_ALL))  # قوس مغلق هنا
         port_range = f'1-{max_ports}'
     else:
         port_range = '1-65535'  # فحص جميع المنافذ
@@ -873,7 +875,7 @@ def check_ports(ip):
     # إعدادات تسريع الفحص
     try:
         print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.YELLOW)
-        nm.scan(ip, ports_range, arguments="-T4 -sS")  # استخدام -T4 للتسريع و -sS لفحص TCP SYN
+        nm.scan(ip, port_range, arguments="-T4 -sS")  # استخدام -T4 للتسريع و -sS لفحص TCP SYN
     except Exception as e:
         print_colored(f"Error with port scanning: {e}", Fore.RED)
         return
