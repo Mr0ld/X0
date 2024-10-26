@@ -859,9 +859,21 @@ def check_subnet(domain):
 
 # دالة فحص المنافذ باستخدام Nmap
 def check_ports(ip):
+    # سؤال المستخدم عن عدد المنافذ المطلوب فحصها
+    choice = input("Do you want to specify the number of ports to scan? (Yes/y or No/n): ").strip().lower()
+    if choice in ['yes', 'y']:
+        max_ports = int(input("Enter the number of ports to scan (e.g., 300): "))
+        port_range = f'1-{max_ports}'
+    else:
+        port_range = '1-65535'  # فحص جميع المنافذ
+    
+    print_colored("\nThe scan may take from 1 to 5 minutes. Please wait...", Fore.CYAN)
+
+    # بدء الفحص
     nm = nmap.PortScanner()
-    nm.scan(ip, '1-1024')
+    nm.scan(ip, port_range)
     print_colored(f"\n Open ports on : {ip}:", Fore.CYAN)
+    
     for host in nm.all_hosts():
         print_colored(f"📝 Host inspection details:", Fore.MAGENTA) 
         print_colored(f" {host}", Fore.CYAN)
