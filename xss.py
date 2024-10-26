@@ -11,6 +11,7 @@ import pyfiglet
 import random
 import sys
 import ssl
+import dns.resolver
 import json
 
 # Initialize colorama
@@ -622,6 +623,10 @@ def get_params(url):
     params = url.split('?')[1]
     return [param.split('=')[0] for param in params.split('&')]
 
+# دالة لطباعة النص بألوان
+def print_colored(text, color):
+    print(color + text + Style.RESET_ALL)
+
 # التحقق من أن الموقع يعمل
 def check_site_status(url):
     try:
@@ -678,6 +683,11 @@ def gather_info_menu():
             if validate_url(url):
                 target_url = protocol + url
 
+    # الحصول على IP الحقيقي للموقع
+    real_ips = get_real_ip(url)
+    if real_ips:
+        print_colored(f"Real IP(s) for {url}: {', '.join(real_ips)}", Fore.GREEN)
+
     # تنفيذ جمع المعلومات على الرابط المدخل
     gather_info(target_url)
 
@@ -686,31 +696,40 @@ def validate_url(url):
     # التحقق من وجود نقطة في الرابط، مما يعني تنسيق مقبول
     return "." in url
 
-
-# دالة لطباعة النص بألوان
-def print_colored(text, color):
-    print(color + text + Style.RESET_ALL)
+# الحصول على IP الحقيقي للموقع
+def get_real_ip(domain):
+    try:
+        # الحصول على سجلات A للمجال
+        answers = dns.resolver.resolve(domain, 'A')
+        return [str(answer) for answer in answers]
+    except Exception as e:
+        print_colored(f"Failed to resolve IP: {e}", Fore.RED)
+        return None
 
 # جمع المعلومات عن الموقع
 def gather_info(url):
-    print_colored(f"\n Collect information about this site : {url}", Fore.CYAN)
-    
+    print_colored(f"\nCollect information about this site: {url}", Fore.CYAN)
+
     # جمع عنوان IP
     domain = url.replace('http://', '').replace('https://', '')
     ip = socket.gethostbyname(domain)
-    print(f"عنوان IP: {ip}")
+    print_colored(f"عنوان IP: {ip}", Fore.GREEN)
 
     # فحص SSL
     check_ssl(domain)
+
+    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
 
     # جلب معلومات السيرفر
     try:
         wsheaders = requests.get(url).headers
         ws = wsheaders.get('Server', 'Could Not Detect')
-        print(f"Web Server: {ws}")
+        print_colored(f"Web Server: {ws}", Fore.GREEN)
     except requests.RequestException as e:
         print_colored(f"خطأ في الوصول إلى {url}: {e}", Fore.RED)
-    
+
+    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
+
     # كشف نوع الـ CMS
     cmssc = requests.get(url).text
     if '/wp-content/' in cmssc:
@@ -723,34 +742,55 @@ def gather_info(url):
         tcms = "Magento"
     else:
         tcms = "Could Not Detect"
-    print(f"CMS: {tcms}")
+    print_colored(f"CMS : ", Fore.GREEN)
+    print_colored(f" {tcms} ", Fore.RED)
+
+    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
 
     # فحص حماية Cloudflare
     check_cloudflare(domain)
 
+    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
+
     # فحص robots.txt
     check_robots(url)
+
+    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
 
     # معلومات WHOIS
     check_whois(domain)
 
+    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
+
     # معلومات GEO IP
     check_geoip(domain)
+
+    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
 
     # فحص DNS
     check_dns(domain)
 
+    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
+
     # حساب Subnet
     check_subnet(domain)
+
+    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
 
     # فحص المنافذ باستخدام Nmap
     check_ports(ip)
 
+    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
+
     # فحص الرؤوس الأمنية الأساسية
     check_security_headers(wsheaders)
 
+    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
+
     # البحث عن عناوين البريد الإلكتروني وأرقام الهواتف
     extract_emails_and_phones(url)
+
+    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
 
     # تحليل ملفات JavaScript
     analyze_js(url)
@@ -765,7 +805,7 @@ def check_ssl(domain):
         with context.wrap_socket(socket.socket(), server_hostname=domain) as s:
             s.connect((domain, 443))
             cert = s.getpeercert()
-            print(f"SSL Certificate Expiry: {cert['notAfter']}")
+            print_colored(f"SSL Certificate Expiry: {cert['notAfter']}", Fore.GREEN)
     except Exception as e:
         print_colored(f"SSL Certificate check failed: {e}", Fore.RED)
 
@@ -775,7 +815,7 @@ def check_cloudflare(domain):
         urlhh = f"http://api.hackertarget.com/httpheaders/?q={domain}"
         resulthh = requests.get(urlhh).text
         cloudflare_status = "Detected" if 'cloudflare' in resulthh else "Not Detected"
-        print(f"Cloudflare: {cloudflare_status}")
+        print_colored(f"Cloudflare: {cloudflare_status}", Fore.GREEN)
     except Exception as e:
         print_colored(f"خطأ أثناء فحص Cloudflare: {e}", Fore.RED)
 
@@ -785,7 +825,7 @@ def check_robots(url):
     try:
         rbtresponse = requests.get(rbturl).text
         if rbtresponse:
-            print(f"Robots File Found:\n{rbtresponse}")
+            print_colored(f"Robots File Found:\n{rbtresponse}", Fore.GREEN)
         else:
             print_colored("Robots File Found But Empty!", Fore.YELLOW)
     except:
@@ -795,45 +835,44 @@ def check_robots(url):
 def check_whois(domain):
     urlwhois = f"http://api.hackertarget.com/whois/?q={domain}"
     resultwhois = requests.get(urlwhois).text
-    print(f"WHOIS Lookup:\n{resultwhois}")
+    print_colored(f"WHOIS Lookup:\n{resultwhois}", Fore.GREEN)
 
 # معلومات GEO IP
 def check_geoip(domain):
     urlgip = f"http://api.hackertarget.com/geoip/?q={domain}"
     resultgip = requests.get(urlgip).text
-    print(f"GEO IP Lookup:\n{resultgip}")
+    print_colored(f"GEO IP Lookup:\n{resultgip}", Fore.GREEN)
 
 # فحص DNS
 def check_dns(domain):
     urldlup = f"http://api.hackertarget.com/dnslookup/?q={domain}"
     resultdlup = requests.get(urldlup).text
-    print(f"DNS Lookup:\n{resultdlup}")
+    print_colored(f"DNS Lookup:\n{resultdlup}", Fore.GREEN)
 
 # حساب Subnet
 def check_subnet(domain):
     urlscal = f"http://api.hackertarget.com/subnetcalc/?q={domain}"
     resultscal = requests.get(urlscal).text
-    print(f"Subnet Calculation:\n{resultscal}")
+    print_colored(f"Subnet Calculation:\n{resultscal}", Fore.GREEN)
 
 # فحص المنافذ باستخدام Nmap
 def check_ports(ip):
     nm = nmap.PortScanner()
     nm.scan(ip, '1-1024')
-    print(f"\nالمنافذ المفتوحة على {ip}:")
+    print_colored(f"\n Open ports on : {ip}:", Fore.CYAN)
     for host in nm.all_hosts():
-        print(f"تفاصيل الفحص للمضيف: {host}")
+        print_colored(f"📝 Host inspection details : {host}", Fore.GREEN)
         for proto in nm[host].all_protocols():
-            print(f"البروتوكول: {proto}")
+            print_colored(f"Protocol : {proto}", Fore.YELLOW)
             lport = nm[host][proto].keys()
             for port in lport:
-                print(f"المنفذ: {port}\tالإصدار: {nm[host][proto][port]['product']}")
+                print_colored(f"port : {port}\t Release : {nm[host][proto][port]['product']}", Fore.GREEN)
 
 # فحص الرؤوس الأمنية
 def check_security_headers(headers):
     security_headers = ["X-XSS-Protection", "X-Content-Type-Options", "X-Frame-Options", "Content-Security-Policy"]
     for header in security_headers:
-        print(f"{header}: {headers.get(header, 'Not Set')}")
-
+        print_colored(f"{header}: {headers.get(header, 'Not Set')}", Fore.YELLOW)
 
 # استخراج عناوين البريد الإلكتروني وأرقام الهواتف
 def extract_emails_and_phones(url):
@@ -841,8 +880,10 @@ def extract_emails_and_phones(url):
         content = requests.get(url).text
         emails = re.findall(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", content)
         phones = re.findall(r"\+?\d[\d -]{8,}\d", content)
-        print(f"Emails found: {emails}")
-        print(f"Phones found: {phones}")
+        print_colored(f"Emails found :", Fore.CYAN)
+        print_colored(f"{emails}", Fore.GREEN)
+        print_colored(f"Phones found :", Fore.CYAN)
+        print_colored(f"{phones}", Fore.GREEN)
     except:
         print_colored("Could not retrieve emails and phones", Fore.RED)
 
@@ -850,16 +891,16 @@ def extract_emails_and_phones(url):
 def analyze_js(url):
     soup = BeautifulSoup(requests.get(url).text, 'html.parser')
     js_files = [script.get('src') for script in soup.find_all('script') if script.get('src')]
-    print(f"JavaScript files: {js_files}")
+    print_colored(f"JavaScript files: {js_files}", Fore.GREEN)
 
 # العودة إلى القائمة الرئيسية أو إيقاف الأداة
 def return_to_menu():
-    slow_print("\n Do you want to :", Fore.CYAN, delay=0.05)
+    print_colored("\n Do you want to :", Fore.CYAN)
     print("1. Return to the checklist")
     print("2. Terminate the program")
     
     while True:
-        choice = input(Fore.YELLOW + "Choose an option:" )
+        choice = input(Fore.YELLOW + "Choose an option: " + Style.RESET_ALL)
         if choice == "1":
             main_menu()
             break
@@ -867,8 +908,7 @@ def return_to_menu():
             print_colored("Thank you for using the tool ❤️", Fore.CYAN)
             exit()
         else:
-            slow_print("Incorrect choice 🚫 Please choose a valid option.", Fore.RED, delay=0.01)
-
+            print_colored("Incorrect choice 🚫 Please choose a valid option.", Fore.RED)
 
 # تشغيل القائمة الرئيسية
 if __name__ == "__main__":
