@@ -861,12 +861,15 @@ def check_ports(ip):
     nm.scan(ip, '1-1024')
     print_colored(f"\n Open ports on : {ip}:", Fore.CYAN)
     for host in nm.all_hosts():
-        print_colored(f"📝 Host inspection details : {host}", Fore.GREEN)
+        print_colored(f"📝 Host inspection details : ", Fore.MAGENTA) 
+        print_colored(f" {host}", Fore.CYAN)
         for proto in nm[host].all_protocols():
             print_colored(f"Protocol : {proto}", Fore.YELLOW)
             lport = nm[host][proto].keys()
             for port in lport:
-                print_colored(f"port : {port}\t Release : {nm[host][proto][port]['product']}", Fore.GREEN)
+                print_colored(f"Port : {port}", Fore.GREEN)  # لون المنفذ أخضر
+                print_colored(f"Release : {nm[host][proto][port]['product']}", Fore.ORANGE)  # لون الإصدار برتقالي
+
 
 # فحص الرؤوس الأمنية
 def check_security_headers(headers):
@@ -882,8 +885,8 @@ def extract_emails_and_phones(url):
         phones = re.findall(r"\+?\d[\d -]{8,}\d", content)
         print_colored(f"Emails found :", Fore.CYAN)
         print_colored(f"{emails}", Fore.GREEN)
-        print_colored(f"Phones found :", Fore.CYAN)
-        print_colored(f"{phones}", Fore.GREEN)
+        print_colored(f"Phones found :", Fore.ORANGE)
+        print_colored(f"{phones}", Fore.ORANGE)
     except:
         print_colored("Could not retrieve emails and phones", Fore.RED)
 
@@ -891,7 +894,7 @@ def extract_emails_and_phones(url):
 def analyze_js(url):
     soup = BeautifulSoup(requests.get(url).text, 'html.parser')
     js_files = [script.get('src') for script in soup.find_all('script') if script.get('src')]
-    print_colored(f"JavaScript files: {js_files}", Fore.GREEN)
+    print_colored(f"JavaScript files: {js_files}", Fore.CYAN)
 
 # العودة إلى القائمة الرئيسية أو إيقاف الأداة
 def return_to_menu():
