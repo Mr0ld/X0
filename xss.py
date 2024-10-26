@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import socket
 import nmap
+import concurrent.futures
 from colorama import Fore, Style, init
 import re
 import os
@@ -877,7 +878,7 @@ def check_ports(ip):
 
 # فحص المنافذ المفتوحة
 def scan_open_ports(ip):
-    nm = nmap.PortScanner()  # تعريف nm ككائن من nmap.PortScanner
+    nm = nmap.PortScanner()
     while True:
         choice = input(Fore.MAGENTA + "Do you want to specify the number of ports to scan? (Yes/y or No/n) : " + Style.RESET_ALL).strip().lower()
         if choice in ['yes', 'y']:
@@ -895,7 +896,7 @@ def scan_open_ports(ip):
 
     try:
         print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.YELLOW)
-        nm.scan(ip, port_range, arguments="-T4 -sT")  # -sT لفحص TCP Connect
+        nm.scan(ip, port_range, arguments="-T5 -sT")  # تعديل مستوى السرعة إلى -T5
     except Exception as e:
         print_colored(f"Error with port scanning: {e}", Fore.RED)
         return
@@ -934,7 +935,7 @@ def scan_ports_for_vulnerabilities(ip):
 
     try:
         print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.YELLOW)
-        nm.scan(ip, port_range, arguments="-T4")
+        nm.scan(ip, port_range, arguments="-T5")  # تعديل مستوى السرعة إلى -T5
     except Exception as e:
         print_colored(f"Error with port scanning: {e}", Fore.RED)
         return
@@ -952,7 +953,9 @@ def scan_ports_for_vulnerabilities(ip):
 
                 if state == 'open':
                     print_colored(f"Open Port : {port} - State: {state}", Fore.GREEN)
-                    check_vulnerabilities(nm, host, port)
+                    # إضافة فحص متعدد باستخدام الخيوط
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+                        executor.submit(check_vulnerabilities, nm, host, port)
 
 # التحقق من الثغرات
 def check_vulnerabilities(nm, host, port):
