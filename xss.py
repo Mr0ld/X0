@@ -880,7 +880,7 @@ def check_ports(ip):
     # إعدادات تسريع الفحص
     try:
         print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.YELLOW)
-        nm.scan(ip, port_range, arguments="-T4 -sS")  # استخدام -T4 للتسريع و -sS لفحص TCP SYN
+        nm.scan(ip, port_range, arguments="-T4 -sT")  # استخدام -T4 للتسريع و -sS لفحص TCP SYN
     except Exception as e:
         print_colored(f"Error with port scanning: {e}", Fore.RED)
         return
@@ -914,6 +914,10 @@ def check_vulnerabilities(nm, host, port):
     except Exception as e:
         print_colored(f"Error checking vulnerabilities: {e}", Fore.RED)
 
+# دالة لفحص الرؤوس الأمنية الأساسية
+def check_security_headers(headers):
+    print_colored("Checking security headers...", Fore.CYAN)
+
     # قائمة برؤوس الأمان الشائعة
     security_headers = {
         "Content-Security-Policy": "Content Security Policy",
@@ -929,6 +933,7 @@ def check_vulnerabilities(nm, host, port):
             print_colored(f"{description} is present: {headers[header]}", Fore.GREEN)
         else:
             print_colored(f"{description} is missing!", Fore.RED)
+
 
 
 # دالة لاستخراج عناوين البريد الإلكتروني وأرقام الهواتف
