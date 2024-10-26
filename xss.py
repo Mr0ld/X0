@@ -879,12 +879,12 @@ def check_ports(ip):
     # إعدادات تسريع الفحص
     try:
         print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.YELLOW)
-        nm.scan(ip, port_range, arguments="-T4 -sT")  # -sS لفحص TCP SYN
+        nm.scan(ip, port_range, arguments="-T4 -sT")  # -sT لفحص TCP Connect
     except Exception as e:
         print_colored(f"Error with port scanning: {e}", Fore.RED)
         return
 
-    print_colored(f"\n Open ports on : {ip}:", Fore.CYAN)
+    print_colored(f"\nOpen ports on : {ip}:", Fore.CYAN)
     for host in nm.all_hosts():
         print_colored(f"📝 Host inspection details:", Fore.MAGENTA)
         print_colored(f" {host}", Fore.CYAN)
@@ -903,17 +903,30 @@ def check_ports(ip):
                 check_vulnerabilities(nm, host, port)
 
 def check_vulnerabilities(nm, host, port):
-    scripts = ['vuln', 'http-vuln*']  # قائمة السكربتات لاختبار الثغرات
+    scripts = [
+        'http-vuln-cve2017-5638',
+        'pgsql-allowed-roles',
+        'ftp-vsftpd-backdoor',
+        'snmp-brute',
+        'ssl-enum-ciphers',
+        'http-security-headers',
+        'http-vuln-cve2017-0144',
+        'smb-vuln-regsvc-dos',
+        'smb-vuln-ms17-010',
+        'mysql-empty-password'
+    ]  # قائمة السكربتات لاختبار الثغرات
+
     vulnerabilities_found = False
 
     for script in scripts:
         try:
             print_colored(f"Checking vulnerabilities on port {port} with script: {script}...", Fore.YELLOW)
             nm.scan(host, str(port), arguments=f'--script={script}')  # استخدم scan لفحص الثغرات
+            
             # معالجة نتائج الفحص هنا
             if 'script' in nm[host]['tcp'][port]:
                 for key, value in nm[host]['tcp'][port]['script'].items():
-                    print_colored(f"Vulnerability found with {key}: {value}", Fore.GREEN)
+                    print_colored(f"Vulnerability found with {key}: {value}", Fore.RED)
                     vulnerabilities_found = True
             else:
                 print_colored(f"No vulnerabilities found with script: {script}", Fore.YELLOW)
@@ -921,7 +934,7 @@ def check_vulnerabilities(nm, host, port):
             print_colored(f"Error checking vulnerabilities: {e}", Fore.RED)
 
     if not vulnerabilities_found:
-        print_colored(f"No vulnerabilities found on port {port} after checking all scripts.", Fore.RED)
+        print_colored(f"No vulnerabilities found on port {port} after checking all scripts.", Fore.GREEN)
 
 # دالة لفحص الرؤوس الأمنية الأساسية
 def check_security_headers(headers):
