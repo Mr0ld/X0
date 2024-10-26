@@ -20,6 +20,9 @@ init(autoreset=True)
 # List of valid API keys
 VALID_API_KEYS = ["x0old", "x0m7s", "X0ANS", "anonymous arabs", "x0dark", "x0black widow", "x0round", "key3", "key2"]  # Add more keys as needed
 
+os.system('clear')
+
+
 def slow_print(text, color, delay=0.05):
     """Print text slowly with color control."""
     for char in text:
@@ -857,34 +860,33 @@ def check_subnet(domain):
     resultscal = requests.get(urlscal).text
     print_colored(f"Subnet Calculation:\n{resultscal}", Fore.GREEN)
 
-# دالة فحص المنافذ باستخدام Nmap
-def check_ports(ip):
-    # سؤال المستخدم عن عدد المنافذ المطلوب فحصها
-    choice = input("Do you want to specify the number of ports to scan? (Yes/y or No/n): ").strip().lower()
-    if choice in ['yes', 'y']:
-        max_ports = int(input("Enter the number of ports to scan (e.g., 300): "))
-        port_range = f'1-{max_ports}'
-    else:
-        port_range = '1-65535'  # فحص جميع المنافذ
-    
-    print_colored("\nThe scan may take from 1 to 5 minutes. Please wait...", Fore.CYAN)
-
-    # بدء الفحص
+# فحص المنافذ باستخدام Nmap
+def check_ports(ip, max_ports=1024):
     nm = nmap.PortScanner()
-    nm.scan(ip, port_range)
-    print_colored(f"\n Open ports on : {ip}:", Fore.CYAN)
+
+    # اختيار عدد المنافذ
+    ports_range = f"1-{max_ports}"
     
+    # إعدادات تسريع الفحص
+    try:
+        print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.YELLOW)
+        nm.scan(ip, ports_range, arguments="-T4 -sS")  # استخدام -T4 للتسريع و -sS لفحص TCP SYN
+    except Exception as e:
+        print_colored(f"Error with port scanning: {e}", Fore.RED)
+        return
+
+    print_colored(f"\n Open ports on : {ip}:", Fore.CYAN)
     for host in nm.all_hosts():
-        print_colored(f"📝 Host inspection details:", Fore.MAGENTA) 
+        print_colored(f"📝 Host inspection details:", Fore.MAGENTA)
         print_colored(f" {host}", Fore.CYAN)
         
         for proto in nm[host].all_protocols():
-            print_colored(f"Protocol : {proto}", Fore.YELLOW)
+            print_colored(f"by Protocol : {proto}", Fore.YELLOW)
             lport = sorted(nm[host][proto].keys())  # ترتيب المنافذ للعرض بشكل منظم
             for port in lport:
                 product = nm[host][proto][port].get('product', 'Unknown')  # معالجة حالة عدم وجود إصدار
                 # طباعة رقم المنفذ باللون الأخضر والإصدار باللون البرتقالي في نفس السطر
-                print_colored(f"Port: {port} - Release: {product}", Fore.GREEN if product != 'Unknown' else Fore.RED)
+                print_colored(f"Open Port : {port} - Release : {product}", Fore.GREEN if product != 'Unknown' else Fore.RED)
                 
 # دالة لفحص الرؤوس الأمنية الأساسية
 def check_security_headers(headers):
@@ -906,6 +908,35 @@ def check_security_headers(headers):
         else:
             print_colored(f"{description} is missing!", Fore.RED)
 
+
+# دالة لاستخراج عناوين البريد الإلكتروني وأرقام الهواتف
+def extract_emails_and_phones(url):
+    try:
+        response = requests.get(url)
+        content = response.text
+
+        # البحث عن عناوين البريد الإلكتروني باستخدام التعبيرات النمطية
+        emails = re.findall(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", content)
+        
+        # البحث عن أرقام الهواتف باستخدام التعبيرات النمطية
+        phones = re.findall(r"\+?\d[\d -]{8,}\d", content)
+
+        if emails:
+            print_colored("Email Addresses Found:", Fore.GREEN)
+            for email in emails:
+                print_colored(email, Fore.LIGHTCYAN_EX)
+        else:
+            print_colored("No Email Addresses Found", Fore.RED)
+
+        if phones:
+            print_colored("Phone Numbers Found:", Fore.GREEN)
+            for phone in phones:
+                print_colored(phone, Fore.LIGHTCYAN_EX)
+        else:
+            print_colored("No Phone Numbers Found", Fore.RED)
+    except Exception as e:
+        print_colored(f"Error extracting emails and phones: {e}", Fore.RED)
+        
 
 # تحليل ملفات JavaScript
 def analyze_js(url):
