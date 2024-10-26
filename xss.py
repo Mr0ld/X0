@@ -860,10 +860,9 @@ def check_subnet(domain):
     resultscal = requests.get(urlscal).text
     print_colored(f"Subnet Calculation:\n{resultscal}", Fore.GREEN)
 
-# وظيفة رئيسية لبدء الفحص
+# دالة فحص المنافذ الرئيسية
 def main():
     target_ip = input("Please enter the IP address to scan: ")
-
     print_colored("Select an option:", Fore.CYAN)
     print_colored("1. Scan open ports and their versions", Fore.CYAN)
     print_colored("2. Scan ports and check for vulnerabilities", Fore.CYAN)
@@ -986,7 +985,7 @@ def check_vulnerabilities(nm, host, port):
             print_colored(f"Error checking vulnerabilities: {e}", Fore.RED)
 
     if not vulnerabilities_found:
-        print_colored(f"No vulnerabilities found on port {port} after checking all scripts.", Fore.GREEN)
+        print_colored(f"No vulnerabilities found on port {port} after checking all scripts.", Fore.GREEN )
 
     # قائمة برؤوس الأمان الشائعة
     security_headers = {
