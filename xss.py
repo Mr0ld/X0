@@ -879,7 +879,7 @@ def check_ports(ip):
     # إعدادات تسريع الفحص
     try:
         print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.YELLOW)
-        nm.scan(ip, port_range, arguments="-T4 -sS")  # -sS لفحص TCP SYN
+        nm.scan(ip, port_range, arguments="-T4 -sT")  # -sS لفحص TCP SYN
     except Exception as e:
         print_colored(f"Error with port scanning: {e}", Fore.RED)
         return
