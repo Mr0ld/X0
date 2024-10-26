@@ -865,13 +865,18 @@ def check_ports(ip):
     nm = nmap.PortScanner()  # تعريف nm ككائن من nmap.PortScanner
     
     # سؤال المستخدم عن عدد المنافذ المطلوب فحصها
-    choice = input(Fore.MAGENTA + "Do you want to specify the number of ports to scan? (Yes/y or No/n) : " + Style.RESET_ALL + '')
-    if choice in ['yes', 'y']:
-        max_ports = int(input(Fore.YELLOW + "Enter the number of ports to scan (e.g., 300): " + Style.RESET_ALL))  # قوس مغلق هنا
-        port_range = f'1-{max_ports}'
-    else:
-        port_range = '1-65535'  # فحص جميع المنافذ
-    
+    while True:
+        choice = input(Fore.MAGENTA + "Do you want to specify the number of ports to scan? (Yes/y or No/n) : " + Style.RESET_ALL).strip().lower()
+        if choice in ['yes', 'y']:
+            max_ports = int(input(Fore.YELLOW + "Enter the number of ports to scan (e.g., 300): " + Style.RESET_ALL))  # قوس مغلق هنا
+            port_range = f'1-{max_ports}'
+            break  # الخروج من الحلقة إذا كان الاختيار صحيحًا
+        elif choice in ['no', 'n']:
+            port_range = '1-65535'  # فحص جميع المنافذ
+            break  # الخروج من الحلقة إذا كان الاختيار صحيحًا
+        else:
+            print_colored(Fore.RED + "Wrong choice 🚫 Please choose a valid option. From these options Yes/y No/n" + Style.RESET_ALL)  # تنبيه المستخدم
+
     # إعدادات تسريع الفحص
     try:
         print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.YELLOW)
@@ -890,12 +895,24 @@ def check_ports(ip):
             lport = sorted(nm[host][proto].keys())  # ترتيب المنافذ للعرض بشكل منظم
             for port in lport:
                 product = nm[host][proto][port].get('product', 'Unknown')  # معالجة حالة عدم وجود إصدار
+                state = nm[host][proto][port]['state']  # حالة المنفذ
                 # طباعة رقم المنفذ باللون الأخضر والإصدار باللون البرتقالي في نفس السطر
-                print_colored(f"Open Port : {port} - Release : {product}", Fore.GREEN if product != 'Unknown' else Fore.RED)
-                
-# دالة لفحص الرؤوس الأمنية الأساسية
-def check_security_headers(headers):
-    print_colored("Checking security headers...", Fore.CYAN)
+                print_colored(f"Open Port : {port} - Release : {product} - State: {state}", Fore.GREEN if product != 'Unknown' else Fore.RED)
+    
+                # كشف الثغرات
+                check_vulnerabilities(nm, host, port)
+
+def check_vulnerabilities(nm, host, port):
+    # استخدام سكربتات Nmap لكشف الثغرات
+    print_colored(f"Checking vulnerabilities on port {port}...", Fore.CYAN)
+    try:
+        # استخدم سكربتات Nmap لكشف الثغرات (مثلاً: http-vuln* أو other vulnerability scripts)
+        nm.scan(host, str(port), arguments='--script=vuln')  # قم بتشغيل سكربتات الثغرات
+        # استعراض نتائج الثغرات
+        for script in nm[host]['tcp'][port]['script']:
+            print_colored(f"🔍 {script}: {nm[host]['tcp'][port]['script'][script]}", Fore.YELLOW)
+    except Exception as e:
+        print_colored(f"Error checking vulnerabilities: {e}", Fore.RED)
 
     # قائمة برؤوس الأمان الشائعة
     security_headers = {
