@@ -863,24 +863,23 @@ def check_subnet(domain):
 # فحص المنافذ باستخدام Nmap
 def check_ports(ip):
     nm = nmap.PortScanner()  # تعريف nm ككائن من nmap.PortScanner
-    
-    # سؤال المستخدم عن عدد المنافذ المطلوب فحصها
+
     while True:
         choice = input(Fore.MAGENTA + "Do you want to specify the number of ports to scan? (Yes/y or No/n) : " + Style.RESET_ALL).strip().lower()
         if choice in ['yes', 'y']:
-            max_ports = int(input(Fore.YELLOW + "Enter the number of ports to scan (e.g., 300): " + Style.RESET_ALL))  # قوس مغلق هنا
+            max_ports = int(input(Fore.YELLOW + "Enter the number of ports to scan (e.g., 300): " + Style.RESET_ALL))
             port_range = f'1-{max_ports}'
-            break  # الخروج من الحلقة إذا كان الاختيار صحيحًا
+            break
         elif choice in ['no', 'n']:
-            port_range = '1-65535'  # فحص جميع المنافذ
-            break  # الخروج من الحلقة إذا كان الاختيار صحيحًا
+            port_range = '1-65535'
+            break
         else:
-            print_colored(Fore.RED + "Wrong choice 🚫 Please choose a valid option. From these options Yes/y No/n" + Style.RESET_ALL)  # تنبيه المستخدم
+            print_colored(Fore.RED + "Wrong choice 🚫 Please choose a valid option. From these options Yes/y No/n" + Style.RESET_ALL)
 
     # إعدادات تسريع الفحص
     try:
         print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.YELLOW)
-        nm.scan(ip, port_range, arguments="-T4 -sT")  # استخدام -T4 للتسريع و -sS لفحص TCP SYN
+        nm.scan(ip, port_range, arguments="-T4 -sS")  # -sS لفحص TCP SYN
     except Exception as e:
         print_colored(f"Error with port scanning: {e}", Fore.RED)
         return
@@ -889,30 +888,40 @@ def check_ports(ip):
     for host in nm.all_hosts():
         print_colored(f"📝 Host inspection details:", Fore.MAGENTA)
         print_colored(f" {host}", Fore.CYAN)
-        
+
         for proto in nm[host].all_protocols():
             print_colored(f"by Protocol : {proto}", Fore.YELLOW)
-            lport = sorted(nm[host][proto].keys())  # ترتيب المنافذ للعرض بشكل منظم
+            lport = sorted(nm[host][proto].keys())
             for port in lport:
-                product = nm[host][proto][port].get('product', 'Unknown')  # معالجة حالة عدم وجود إصدار
-                state = nm[host][proto][port]['state']  # حالة المنفذ
-                # طباعة رقم المنفذ باللون الأخضر والإصدار باللون البرتقالي في نفس السطر
+                port_info = nm[host][proto].get(port, {})
+                product = port_info.get('product', 'Unknown')
+                state = port_info.get('state', 'Unknown')
+
                 print_colored(f"Open Port : {port} - Release : {product} - State: {state}", Fore.GREEN if product != 'Unknown' else Fore.RED)
-    
-                # كشف الثغرات
+                
+                # فحص الثغرات على المنفذ
                 check_vulnerabilities(nm, host, port)
 
 def check_vulnerabilities(nm, host, port):
-    # استخدام سكربتات Nmap لكشف الثغرات
-    print_colored(f"Checking vulnerabilities on port {port}...", Fore.CYAN)
-    try:
-        # استخدم سكربتات Nmap لكشف الثغرات (مثلاً: http-vuln* أو other vulnerability scripts)
-        nm.scan(host, str(port), arguments='--script=vuln')  # قم بتشغيل سكربتات الثغرات
-        # استعراض نتائج الثغرات
-        for script in nm[host]['tcp'][port]['script']:
-            print_colored(f"🔍 {script}: {nm[host]['tcp'][port]['script'][script]}", Fore.YELLOW)
-    except Exception as e:
-        print_colored(f"Error checking vulnerabilities: {e}", Fore.RED)
+    scripts = ['vuln', 'http-vuln*']  # قائمة السكربتات لاختبار الثغرات
+    vulnerabilities_found = False
+
+    for script in scripts:
+        try:
+            print_colored(f"Checking vulnerabilities on port {port} with script: {script}...", Fore.YELLOW)
+            nm.run_script(script, arguments=f'-p {port} {host}')
+            # معالجة نتائج الفحص هنا
+            if nm[host]['tcp'][port]['script']:
+                for key, value in nm[host]['tcp'][port]['script'].items():
+                    print_colored(f"Vulnerability found with {key}: {value}", Fore.RED)
+                    vulnerabilities_found = True
+            else:
+                print_colored(f"No vulnerabilities found with script: {script}", Fore.GREEN)
+        except Exception as e:
+            print_colored(f"Error checking vulnerabilities: {e}", Fore.RED)
+
+    if not vulnerabilities_found:
+        print_colored(f"No vulnerabilities found on port {port} after checking all scripts.", Fore.GREEN)
 
 # دالة لفحص الرؤوس الأمنية الأساسية
 def check_security_headers(headers):
