@@ -826,7 +826,8 @@ def check_robots(url):
     try:
         rbtresponse = requests.get(rbturl).text
         if rbtresponse:
-            print_colored(f"Robots File Found:\n{rbtresponse}", Fore.GREEN)
+            print_colored(f"Robots File Found :", Fore.GREEN)
+            print_colored(f"{rbtresponse}", Fore.LIGHTYELLOW_EX)
         else:
             print_colored("Robots File Found But Empty!", Fore.YELLOW)
     except:
@@ -856,42 +857,22 @@ def check_subnet(domain):
     resultscal = requests.get(urlscal).text
     print_colored(f"Subnet Calculation:\n{resultscal}", Fore.GREEN)
 
-# فحص المنافذ باستخدام Nmap
+# دالة فحص المنافذ باستخدام Nmap
 def check_ports(ip):
     nm = nmap.PortScanner()
     nm.scan(ip, '1-1024')
     print_colored(f"\n Open ports on : {ip}:", Fore.CYAN)
     for host in nm.all_hosts():
-        print_colored(f"📝 Host inspection details : ", Fore.MAGENTA) 
+        print_colored(f"📝 Host inspection details:", Fore.MAGENTA) 
         print_colored(f" {host}", Fore.CYAN)
+        
         for proto in nm[host].all_protocols():
             print_colored(f"Protocol : {proto}", Fore.YELLOW)
-            lport = nm[host][proto].keys()
+            lport = sorted(nm[host][proto].keys())  # ترتيب المنافذ للعرض بشكل منظم
             for port in lport:
-                # طباعة رقم المنفذ باللون الأخضر
-                print_colored(f"Port: {port}", Fore.GREEN, end=' ')  # لون المنفذ أخضر
-                # طباعة الإصدار باللون البرتقالي في نفس السطر
-                print_colored(f"Release: {nm[host][proto][port]['product']}", Fore.LIGHTYELLOW_EX)  # لون الإصدار برتقالي
-
-
-# فحص الرؤوس الأمنية
-def check_security_headers(headers):
-    security_headers = ["X-XSS-Protection", "X-Content-Type-Options", "X-Frame-Options", "Content-Security-Policy"]
-    for header in security_headers:
-        print_colored(f"{header}: {headers.get(header, 'Not Set')}", Fore.YELLOW)
-
-# استخراج عناوين البريد الإلكتروني وأرقام الهواتف
-def extract_emails_and_phones(url):
-    try:
-        content = requests.get(url).text
-        emails = re.findall(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", content)
-        phones = re.findall(r"\+?\d[\d -]{8,}\d", content)
-        print_colored(f"Emails found :", Fore.CYAN)
-        print_colored(f"{emails}", Fore.GREEN)
-        print_colored(f"Phones found :", Fore.ORANGE)
-        print_colored(f"{phones}", Fore.ORANGE)
-    except:
-        print_colored("Could not retrieve emails and phones", Fore.RED)
+                product = nm[host][proto][port].get('product', 'Unknown')  # معالجة حالة عدم وجود إصدار
+                # طباعة رقم المنفذ باللون الأخضر والإصدار باللون البرتقالي في نفس السطر
+                print_colored(f"Port: {port} - Release: {product}", Fore.GREEN if product != 'Unknown' else Fore.RED)
 
 # تحليل ملفات JavaScript
 def analyze_js(url):
