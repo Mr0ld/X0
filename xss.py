@@ -868,9 +868,9 @@ def check_ports(ip):
             print_colored(f"Protocol : {proto}", Fore.YELLOW)
             lport = nm[host][proto].keys()
             for port in lport:
-                # طباعة رقم المنفذ باللون الأخضر والإصدار باللون البرتقالي في نفس السطر
-                print_colored(f"Port: ", Fore.GREEN, end='')  # لون المنفذ أخضر
-                print_colored(f"{port}  ", Fore.GREEN, end='')  # رقم المنفذ
+                # طباعة رقم المنفذ باللون الأخضر
+                print_colored(f"Port: {port}", Fore.GREEN, end=' ')  # لون المنفذ أخضر
+                # طباعة الإصدار باللون البرتقالي في نفس السطر
                 print_colored(f"Release: {nm[host][proto][port]['product']}", Fore.LIGHTYELLOW_EX)  # لون الإصدار برتقالي
 
 
