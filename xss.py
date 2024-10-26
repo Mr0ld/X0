@@ -885,6 +885,27 @@ def check_ports(ip):
                 product = nm[host][proto][port].get('product', 'Unknown')  # معالجة حالة عدم وجود إصدار
                 # طباعة رقم المنفذ باللون الأخضر والإصدار باللون البرتقالي في نفس السطر
                 print_colored(f"Port: {port} - Release: {product}", Fore.GREEN if product != 'Unknown' else Fore.RED)
+                
+# دالة لفحص الرؤوس الأمنية الأساسية
+def check_security_headers(headers):
+    print_colored("Checking security headers...", Fore.CYAN)
+
+    # قائمة برؤوس الأمان الشائعة
+    security_headers = {
+        "Content-Security-Policy": "Content Security Policy",
+        "Strict-Transport-Security": "Strict Transport Security",
+        "X-Content-Type-Options": "X Content Type Options",
+        "X-Frame-Options": "X Frame Options",
+        "X-XSS-Protection": "X XSS Protection"
+    }
+
+    # فحص كل رأس من رؤوس الأمان
+    for header, description in security_headers.items():
+        if header in headers:
+            print_colored(f"{description} is present: {headers[header]}", Fore.GREEN)
+        else:
+            print_colored(f"{description} is missing!", Fore.RED)
+
 
 # تحليل ملفات JavaScript
 def analyze_js(url):
