@@ -868,8 +868,10 @@ def check_ports(ip):
             print_colored(f"Protocol : {proto}", Fore.YELLOW)
             lport = nm[host][proto].keys()
             for port in lport:
-                print_colored(f"Port : {port}", Fore.GREEN)  # لون المنفذ أخضر
-                print_colored(f"Release : {nm[host][proto][port]['product']}", Fore.LIGHTYELLOW_EX)  # لون الإصدار برتقالي
+                # طباعة رقم المنفذ باللون الأخضر والإصدار باللون البرتقالي في نفس السطر
+                print_colored(f"Port: ", Fore.GREEN, end='')  # لون المنفذ أخضر
+                print_colored(f"{port}  ", Fore.GREEN, end='')  # رقم المنفذ
+                print_colored(f"Release: {nm[host][proto][port]['product']}", Fore.LIGHTYELLOW_EX)  # لون الإصدار برتقالي
 
 
 # فحص الرؤوس الأمنية
