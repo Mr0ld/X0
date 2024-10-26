@@ -860,8 +860,25 @@ def check_subnet(domain):
     resultscal = requests.get(urlscal).text
     print_colored(f"Subnet Calculation:\n{resultscal}", Fore.GREEN)
 
-# فحص المنافذ باستخدام Nmap
-def check_ports(ip):
+# وظيفة رئيسية لبدء الفحص
+def main():
+    target_ip = input("Please enter the IP address to scan: ")
+
+    print_colored("Select an option:", Fore.CYAN)
+    print_colored("1. Scan open ports and their versions", Fore.CYAN)
+    print_colored("2. Scan ports and check for vulnerabilities", Fore.CYAN)
+    
+    option = input(Fore.MAGENTA + "Enter your choice (1 or 2): " + Style.RESET_ALL).strip()
+
+    if option == '1':
+        scan_open_ports(target_ip)
+    elif option == '2':
+        scan_ports_for_vulnerabilities(target_ip)
+    else:
+        print_colored(Fore.RED + "Invalid option. Please choose 1 or 2." + Style.RESET_ALL)
+
+# فحص المنافذ المفتوحة
+def scan_open_ports(ip):
     nm = nmap.PortScanner()  # تعريف nm ككائن من nmap.PortScanner
 
     while True:
@@ -874,7 +891,7 @@ def check_ports(ip):
             port_range = '1-65535'
             break
         else:
-            print_colored(Fore.RED + "Wrong choice 🚫 Please choose a valid option. From these options Yes/y No/n" + Style.RESET_ALL)
+            print_colored(Fore.RED + "Wrong choice 🚫 Please choose a valid option." + Style.RESET_ALL)
 
     # إعدادات تسريع الفحص
     try:
@@ -899,8 +916,43 @@ def check_ports(ip):
 
                 print_colored(f"Open Port : {port} - Release : {product} - State: {state}", Fore.GREEN if product != 'Unknown' else Fore.RED)
 
-                # فحص الثغرات على المنفذ
-                check_vulnerabilities(nm, host, port)
+def scan_ports_for_vulnerabilities(ip):
+    nm = nmap.PortScanner()  # تعريف nm ككائن من nmap.PortScanner
+
+    while True:
+        choice = input(Fore.MAGENTA + "Do you want to specify the number of ports to scan for vulnerabilities? (Yes/y or No/n) : " + Style.RESET_ALL).strip().lower()
+        if choice in ['yes', 'y']:
+            max_ports = int(input(Fore.YELLOW + "Enter the number of ports to scan for vulnerabilities (e.g., 300): " + Style.RESET_ALL))
+            port_range = f'1-{max_ports}'
+            break
+        elif choice in ['no', 'n']:
+            port_range = '1-65535'
+            break
+        else:
+            print_colored(Fore.RED + "Wrong choice 🚫 Please choose a valid option." + Style.RESET_ALL)
+
+    # إعدادات تسريع الفحص
+    try:
+        print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.YELLOW)
+        nm.scan(ip, port_range, arguments="-T4")  # -sS لفحص TCP SYN
+    except Exception as e:
+        print_colored(f"Error with port scanning: {e}", Fore.RED)
+        return
+
+    print_colored(f"\nChecking vulnerabilities on open ports for : {ip}:", Fore.CYAN)
+    for host in nm.all_hosts():
+        print_colored(f"📝 Host inspection details:", Fore.MAGENTA)
+        print_colored(f" {host}", Fore.CYAN)
+
+        for proto in nm[host].all_protocols():
+            lport = sorted(nm[host][proto].keys())
+            for port in lport:
+                port_info = nm[host][proto].get(port, {})
+                state = port_info.get('state', 'Unknown')
+
+                if state == 'open':
+                    print_colored(f"Open Port : {port} - State: {state}", Fore.GREEN)
+                    check_vulnerabilities(nm, host, port)
 
 def check_vulnerabilities(nm, host, port):
     scripts = [
@@ -935,10 +987,6 @@ def check_vulnerabilities(nm, host, port):
 
     if not vulnerabilities_found:
         print_colored(f"No vulnerabilities found on port {port} after checking all scripts.", Fore.GREEN)
-
-# دالة لفحص الرؤوس الأمنية الأساسية
-def check_security_headers(headers):
-    print_colored("Checking security headers...", Fore.CYAN)
 
     # قائمة برؤوس الأمان الشائعة
     security_headers = {
