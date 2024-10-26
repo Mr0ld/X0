@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import socket
 import nmap
+import subprocess
 import concurrent.futures
 from colorama import Fore, Style, init
 import re
@@ -878,7 +879,6 @@ def check_ports(ip):
 
 # فحص المنافذ المفتوحة
 def scan_open_ports(ip):
-    nm = nmap.PortScanner()
     while True:
         choice = input(Fore.MAGENTA + "Do you want to specify the number of ports to scan? (Yes/y or No/n) : " + Style.RESET_ALL).strip().lower()
         if choice in ['yes', 'y']:
@@ -894,30 +894,17 @@ def scan_open_ports(ip):
         else:
             print_colored("Wrong choice 🚫 Please choose a valid option.", Fore.RED)
 
+    print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.YELLOW)
+    command = f"nmap -T5 -sT -p {port_range} {ip}"
+    
     try:
-        print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.YELLOW)
-        nm.scan(ip, port_range, arguments="-T5 -sT")  # تعديل مستوى السرعة إلى -T5
-    except Exception as e:
+        result = subprocess.check_output(command, shell=True, text=True)
+        print_colored(result, Fore.CYAN)
+    except subprocess.CalledProcessError as e:
         print_colored(f"Error with port scanning: {e}", Fore.RED)
-        return
-
-    print_colored(f"\nOpen ports on : {ip}:", Fore.CYAN)
-    for host in nm.all_hosts():
-        print_colored(f"📝 Host inspection details:", Fore.MAGENTA)
-        print_colored(f" {host}", Fore.CYAN)
-
-        for proto in nm[host].all_protocols():
-            print_colored(f"by Protocol : {proto}", Fore.YELLOW)
-            lport = sorted(nm[host][proto].keys())
-            for port in lport:
-                port_info = nm[host][proto].get(port, {})
-                product = port_info.get('product', 'Unknown')
-                state = port_info.get('state', 'Unknown')
-                print_colored(f"Open Port : {port} - Release : {product} - State: {state}", Fore.GREEN if product != 'Unknown' else Fore.RED)
 
 # فحص المنافذ للبحث عن الثغرات
 def scan_ports_for_vulnerabilities(ip):
-    nm = nmap.PortScanner()
     while True:
         choice = input(Fore.MAGENTA + "Do you want to specify the number of ports to scan for vulnerabilities? (Yes/y or No/n) : " + Style.RESET_ALL).strip().lower()
         if choice in ['yes', 'y']:
@@ -933,56 +920,36 @@ def scan_ports_for_vulnerabilities(ip):
         else:
             print_colored("Wrong choice 🚫 Please choose a valid option.", Fore.RED)
 
+    print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.YELLOW)
+    command = f"nmap -T5 -p {port_range} --script http-vuln-cve2017-5638,ssl-enum-ciphers {ip}"
+
     try:
-        print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.YELLOW)
-        nm.scan(ip, port_range, arguments="-T5")  # تعديل مستوى السرعة إلى -T5
-    except Exception as e:
+        result = subprocess.check_output(command, shell=True, text=True)
+        print_colored(result, Fore.CYAN)
+    except subprocess.CalledProcessError as e:
         print_colored(f"Error with port scanning: {e}", Fore.RED)
-        return
 
-    print_colored(f"\nChecking vulnerabilities on open ports for : {ip}:", Fore.CYAN)
-    for host in nm.all_hosts():
-        print_colored(f"📝 Host inspection details:", Fore.MAGENTA)
-        print_colored(f" {host}", Fore.CYAN)
-
-        for proto in nm[host].all_protocols():
-            lport = sorted(nm[host][proto].keys())
-            for port in lport:
-                port_info = nm[host][proto].get(port, {})
-                state = port_info.get('state', 'Unknown')
-
-                if state == 'open':
-                    print_colored(f"Open Port : {port} - State: {state}", Fore.GREEN)
-                    # إضافة فحص متعدد باستخدام الخيوط
-                    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-                        executor.submit(check_vulnerabilities, nm, host, port)
-
-# التحقق من الثغرات
-def check_vulnerabilities(nm, host, port):
+# التحقق من الثغرات باستخدام سكربتات محددة لكل منفذ
+def check_vulnerabilities(ip, port):
     scripts = [
         'http-vuln-cve2017-5638',
-        'pgsql-allowed-roles',
-        'ftp-vsftpd-backdoor',
-        'snmp-brute',
         'ssl-enum-ciphers',
         'http-security-headers',
-        'http-vuln-cve2017-0144',
-        'smb-vuln-regsvc-dos',
-        'smb-vuln-ms17-010',
-        'mysql-empty-password'
+        'smb-vuln-ms17-010'
     ]
+    
     vulnerabilities_found = False
     for script in scripts:
+        command = f"nmap -p {port} --script={script} {ip}"
         try:
             print_colored(f"Checking vulnerabilities on port {port} with script: {script}...", Fore.YELLOW)
-            nm.scan(host, str(port), arguments=f'--script={script}')
-            if 'script' in nm[host]['tcp'][port]:
-                for key, value in nm[host]['tcp'][port]['script'].items():
-                    print_colored(f"Vulnerability found with {key}: {value}", Fore.RED)
-                    vulnerabilities_found = True
+            result = subprocess.check_output(command, shell=True, text=True)
+            if result:
+                print_colored(f"Vulnerability found with {script}: {result}", Fore.RED)
+                vulnerabilities_found = True
             else:
-                print_colored(f"No vulnerabilities found with script: {script}", Fore.YELLOW)
-        except Exception as e:
+                print_colored(f"No vulnerabilities found with script: {script}", Fore.GREEN)
+        except subprocess.CalledProcessError as e:
             print_colored(f"Error checking vulnerabilities: {e}", Fore.RED)
 
     if not vulnerabilities_found:
