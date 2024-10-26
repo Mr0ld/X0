@@ -713,7 +713,8 @@ def gather_info(url):
     # جمع عنوان IP
     domain = url.replace('http://', '').replace('https://', '')
     ip = socket.gethostbyname(domain)
-    print_colored(f"عنوان IP: {ip}", Fore.GREEN)
+    print_colored(f"IP : ", Fore.MAGENTA)
+    print_colored(f" {ip}", Fore.GREEN)
 
     # فحص SSL
     check_ssl(domain)
@@ -726,7 +727,7 @@ def gather_info(url):
         ws = wsheaders.get('Server', 'Could Not Detect')
         print_colored(f"Web Server: {ws}", Fore.GREEN)
     except requests.RequestException as e:
-        print_colored(f"خطأ في الوصول إلى {url}: {e}", Fore.RED)
+        print_colored(f"Error accessing to {url} : {e}", Fore.RED)
 
     print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
 
@@ -868,7 +869,7 @@ def check_ports(ip):
             lport = nm[host][proto].keys()
             for port in lport:
                 print_colored(f"Port : {port}", Fore.GREEN)  # لون المنفذ أخضر
-                print_colored(f"Release : {nm[host][proto][port]['product']}", Fore.ORANGE)  # لون الإصدار برتقالي
+                print_colored(f"Release : {nm[host][proto][port]['product']}", Fore.LIGHTYELLOW_EX)  # لون الإصدار برتقالي
 
 
 # فحص الرؤوس الأمنية
@@ -894,7 +895,7 @@ def extract_emails_and_phones(url):
 def analyze_js(url):
     soup = BeautifulSoup(requests.get(url).text, 'html.parser')
     js_files = [script.get('src') for script in soup.find_all('script') if script.get('src')]
-    print_colored(f"JavaScript files: {js_files}", Fore.CYAN)
+    print_colored(f"JavaScript files : {js_files}", Fore.MAGENTA)
 
 # العودة إلى القائمة الرئيسية أو إيقاف الأداة
 def return_to_menu():
