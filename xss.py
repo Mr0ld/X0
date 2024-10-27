@@ -979,7 +979,7 @@ def start_vulnerability_scan(target_url, wordlist_path):
     wordlist_path = file_exists(wordlist_path)
     if wordlist_path:
         print_colored(f"Wordlist found at {wordlist_path}. Starting scan...", Fore.GREEN)
-        os.system(f"/usr/bin/dirb {target_url} {wordlist_path}")
+        os.system(f"dirb {target_url} {wordlist_path}")
     else:
         print_colored("Error: Wordlist file not found! Please check the full path.", Fore.RED)
 
