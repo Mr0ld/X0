@@ -714,12 +714,16 @@ def get_real_ip(domain):
 # جمع المعلومات عن الموقع
 def gather_info(url):
     print_colored(f"\nCollect information about this site: {url}", Fore.CYAN)
+    
+    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
 
     # جمع عنوان IP
     domain = url.replace('http://', '').replace('https://', '')
     ip = socket.gethostbyname(domain)
     print_colored(f"IP : ", Fore.MAGENTA)
     print_colored(f" {ip}", Fore.GREEN)
+    
+    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
 
     # فحص SSL
     check_ssl(domain)
@@ -783,8 +787,8 @@ def gather_info(url):
 
     print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
 
-    # فحص المنافذ باستخدام Nmap
-    check_ports(ip)
+    # تحليل ملفات JavaScript
+    analyze_js(url)
 
     print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
 
@@ -798,8 +802,13 @@ def gather_info(url):
 
     print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
 
-    # تحليل ملفات JavaScript
-    analyze_js(url)
+    #سؤال المستخدم عن فحث المنافذ
+    start_port_check()
+    
+    # فحص المنافذ باستخدام Nmap
+    check_ports(ip)
+    
+    
 
     # العودة إلى القائمة الرئيسية بعد انتهاء الفحص
     return_to_menu()
