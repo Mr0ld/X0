@@ -979,7 +979,7 @@ def start_vulnerability_scan(target_url, wordlist_path):
     wordlist_path = file_exists(wordlist_path)
     if wordlist_path:
         print_colored(f"Wordlist found at {wordlist_path}. Starting scan...", Fore.GREEN)
-        os.system(f"dirb {target_url} {wordlist_path}")
+        os.system(f"dirb {target_url} {wordlist_path} -A 'Mozilla/5.0'")
     else:
         print_colored("Error: Wordlist file not found! Please check the full path.", Fore.RED)
 
@@ -1055,7 +1055,7 @@ def path_discovery():
                         passlist_path = file_exists(passlist_name)
                         
                         if userlist_path and passlist_path:
-                            os.system(f"hydra -L {userlist_path} -P {passlist_path} {target_url}")
+                            os.system(f"/usr/local/bin/hydra -L {userlist_path} -P {passlist_path} {target_url}")
                             break
                         else:
                             print_colored("Error: One or both wordlist files not found! Please check the filenames.", Fore.RED)
