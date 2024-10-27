@@ -110,13 +110,19 @@ def enter_num():
         choice = input(Fore.YELLOW + "Choose one of these options by entering its number: " + Style.RESET_ALL + "\n")
 
         if choice == '1':
-            vuln_menu()  # Go to vulnerability scan
-            break  # Exit the loop after valid input
+            vuln_menu()  # Add function here for your vulnerability scan options
         elif choice == '2':
-            gather_info_menu()  # Go to information gathering
+            gather_info_menu()  # Add function here for your information gathering options
+        elif choice == '3':
+            nmap_scan()
+        elif choice == '4':
+            path_discovery()
+        elif choice == '5':
+            sys.exit()
             break  # Exit the loop after valid input
         else:
             print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
+
 
 # Function to show logo with slow print
 def show_logo():
@@ -163,13 +169,14 @@ def show_logo():
 def main_menu():
     show_logo()
     print_colored("========================================", Fore.CYAN)
-    print_colored("           Vulnerability Testing Tool           ", Fore.GREEN)
+    print_colored("           Security Testing Tool           ", Fore.GREEN)
     print_colored("========================================", Fore.CYAN)
-
     print()
     print_colored("1. Vulnerability Scan", Fore.MAGENTA)
-    print_colored("2. Gather Website Information", Fore.MAGENTA)
-    print()
+    print_colored("2. Information Gathering", Fore.MAGENTA)
+    print_colored("3. Nmap Deep Vulnerability Scan", Fore.MAGENTA)
+    print_colored("4. Path Discovery & Admin Page Brute Force", Fore.MAGENTA)
+    print_colored("5. Exit", Fore.RED)
     print_colored("========================================", Fore.RED)
     print()
     enter_num()
@@ -953,6 +960,133 @@ def return_to_menu():
             exit()
         else:
             print_colored("Incorrect choice 🚫 Please choose a valid option.", Fore.RED)
+            
+            
+
+def print_colored(text, color):
+    print(color + text + Style.RESET_ALL)
+
+def file_exists(filename):
+    # Search for the file in the entire system
+    print_colored(f"Searching for {filename}...", Fore.CYAN)
+    
+    # For Unix-based systems (Linux/MacOS/Android) using find
+    if os.name == 'posix':
+        try:
+            result = subprocess.check_output(['find', '/', '-name', filename], stderr=subprocess.DEVNULL)
+            file_path = result.decode().splitlines()[0]
+            return file_path
+        except (subprocess.CalledProcessError, IndexError):
+            return None
+
+    # For Windows using os.walk to traverse the file system
+    elif os.name == 'nt':
+        for root, dirs, files in os.walk("C:\\"):
+            if filename in files:
+                return os.path.join(root, filename)
+    else:
+        print_colored("Unsupported OS.", Fore.RED)
+        return None
+
+    return None
+
+def nmap_scan():
+    print_colored("\nNmap Scan Options", Fore.CYAN)
+    print_colored("1. Deep Vulnerability Scan", Fore.GREEN)
+    print_colored("2. Medium Vulnerability Scan", Fore.GREEN)
+    print_colored("3. Custom Command", Fore.GREEN)
+    print_colored("4. Back to Main Menu", Fore.GREEN)
+    
+    while True:
+        choice = input(Fore.YELLOW + "Choose an option: ")
+        if choice not in ['1', '2', '3', '4']:
+            print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
+            continue
+        
+        target = input(Fore.YELLOW + "Enter the target URL/IP: ")
+
+        if choice == '1':
+            os.system(f"nmap -sV --script=vuln {target}")
+        elif choice == '2':
+            os.system(f"nmap -sS {target}")
+        elif choice == '3':
+            command = input(Fore.YELLOW + "Enter Nmap command: ")
+            os.system(f"nmap {command} {target}")
+        elif choice == '4':
+            return  # Back to Main Menu
+        break
+
+def path_discovery():
+    print_colored("\nPath Discovery Options", Fore.CYAN)
+    print_colored("1. Hidden Path Discovery", Fore.GREEN)
+    print_colored("2. Admin Page Brute Force", Fore.GREEN)
+    print_colored("3. Back to Main Menu", Fore.GREEN)
+
+    while True:
+        choice = input(Fore.YELLOW + "Choose an option: ")
+        if choice not in ['1', '2', '3']:
+            print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
+            continue
+        
+        if choice == '1':
+            target_url = input(Fore.YELLOW + "Enter target URL: ")
+            
+            # Prompt until valid wordlist file is provided
+            while True:
+                wordlist_name = input(Fore.YELLOW + "Enter Wordlist filename (with extension): ")
+                wordlist_path = file_exists(wordlist_name)
+                
+                if wordlist_path:
+                    os.system(f"dirb {target_url} {wordlist_path}")
+                    break
+                else:
+                    print_colored("Error: Wordlist file not found! Please enter a valid filename.", Fore.RED)
+        
+        elif choice == '2':
+            target_url = input(Fore.YELLOW + "Enter admin page URL: ")
+            print_colored("1. Brute force both username and password", Fore.GREEN)
+            print_colored("2. Brute force password only", Fore.GREEN)
+            
+            while True:
+                bf_choice = input(Fore.YELLOW + "Choose an option: ")
+                if bf_choice not in ['1', '2']:
+                    print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
+                    continue
+                
+                if bf_choice == '1':
+                    # Loop until valid username and password wordlists are provided
+                    while True:
+                        userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): ")
+                        passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
+                        userlist_path = file_exists(userlist_name)
+                        passlist_path = file_exists(passlist_name)
+                        
+                        if userlist_path and passlist_path:
+                            os.system(f"hydra -L {userlist_path} -P {passlist_path} {target_url}")
+                            break
+                        else:
+                            print_colored("Error: One or both wordlist files not found! Please check the filenames.", Fore.RED)
+                    break
+                    
+                elif bf_choice == '2':
+                    username = input(Fore.YELLOW + "Enter username: ")
+                    
+                    # Loop until valid password wordlist is provided
+                    while True:
+                        passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
+                        passlist_path = file_exists(passlist_name)
+                        
+                        if passlist_path:
+                            os.system(f"hydra -l {username} -P {passlist_path} {target_url}")
+                            break
+                        else:
+                            print_colored("Error: Password wordlist file not found! Please enter a valid filename.", Fore.RED)
+                    break
+
+        elif choice == '3':
+            return  # Back to Main Menu
+        break
+
 
 # تشغيل القائمة الرئيسية
 if __name__ == "__main__":
