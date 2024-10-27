@@ -866,15 +866,28 @@ def check_subnet(domain):
 def start_port_check():
     choice = input(Fore.MAGENTA + "Do you want to perform a port scan? (Yes/y or No/n): " + Style.RESET_ALL).strip().lower()
     
-    if choice in ['yes', 'y','YES', 'Y','Yes']:
-        # إذا كانت الإجابة نعم، ننتقل مباشرة لدالة check_ports
-        check_ports()
-    elif choice in ['NO', 'no','N', 'n','No']:
+    if choice in ['yes', 'y']:
+        
+        check_ports(ip)
+    elif choice in ['no', 'n']:
         # إذا كانت الإجابة لا، يتم إيقاف الفحص مع إظهار رسالة
-        print_colored("⚠️Port scan was not performed on the website.", Fore.RED)
+        print_colored("⚠️ Port scan was not performed on the website.", Fore.RED)
     else:
         print_colored("🔴 Invalid choice. Please enter Yes/y or No/n.", Fore.RED)
 
+def check_ports(ip):
+    slow_print("Select an option:", Fore.YELLOW, delay=0.03)
+    print_colored("1. Scan open ports and their versions", Fore.CYAN)
+    print_colored("2. Scan ports and check for vulnerabilities", Fore.CYAN)
+    
+    option = input(Fore.MAGENTA + "Enter your choice (1 or 2): " + Style.RESET_ALL).strip()
+
+    if option == '1':
+        scan_open_ports(ip)
+    elif option == '2':
+        scan_ports_for_vulnerabilities(ip)
+    else:
+        print_colored("Invalid option. Please choose 1 or 2.", Fore.RED)
 
 def check_ports(ip):
     slow_print("Select an option :", Fore.YELLOW, delay=0.01)
