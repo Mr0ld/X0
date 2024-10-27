@@ -921,7 +921,7 @@ def scan_ports_for_vulnerabilities(ip):
             print_colored("Wrong choice 🚫 Please choose a valid option.", Fore.RED)
 
     print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.YELLOW)
-    command = f"nmap -T5 -sV -O --script vuln,exploit,auth,intrusive -p {port_range}  --script-args vulns.showall=1 --script-timeout 15s {ip}"
+    command = f"nmap -T5 -p {port_range} --script http-vuln-cve2017-5638,ssl-enum-ciphers {ip}"
 
     try:
         result = subprocess.check_output(command, shell=True, text=True)
@@ -955,8 +955,12 @@ def check_vulnerabilities(ip, port):
     if not vulnerabilities_found:
         print_colored(f"No vulnerabilities found on port {port} after checking all scripts.", Fore.LIGHTYELLOW_EX)
 
+# دالة لفحص الرؤوس الأمنية الأساسية
+def check_security_headers(headers):
+    print_colored("Checking security headers...", Fore.CYAN)
+
     # قائمة برؤوس الأمان الشائعة
-    check_security_headers = {
+    security_headers = {
         "Content-Security-Policy": "Content Security Policy",
         "Strict-Transport-Security": "Strict Transport Security",
         "X-Content-Type-Options": "X Content Type Options",
