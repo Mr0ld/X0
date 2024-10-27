@@ -966,27 +966,20 @@ def return_to_menu():
 def print_colored(text, color):
     print(color + text + Style.RESET_ALL)
 
-def file_exists(filename):
-    # Search for the file in the entire system
-    print_colored(f"Searching for {filename}...", Fore.CYAN)
-    
-    # For Unix-based systems (Linux/MacOS/Android) using find
-    if os.name == 'posix':
-        try:
-            result = subprocess.check_output(['find', '/', '-name', filename], stderr=subprocess.DEVNULL)
-            file_path = result.decode().splitlines()[0]
-            return file_path
-        except (subprocess.CalledProcessError, IndexError):
-            return None
-
-    # For Windows using os.walk to traverse the file system
-    elif os.name == 'nt':
-        for root, dirs, files in os.walk("C:\\"):
-            if filename in files:
-                return os.path.join(root, filename)
+def file_exists(full_path):
+    # التحقق من وجود الملف باستخدام المسار الكامل المدخل
+    if os.path.isfile(full_path):
+        return full_path
     else:
-        print_colored("Unsupported OS.", Fore.RED)
         return None
+
+def start_vulnerability_scan(target_url, wordlist_path):
+    # التحقق من المسار وبدء الفحص
+    if file_exists(wordlist_path):
+        print_colored(f"Wordlist found at {wordlist_path}. Starting scan...", Fore.GREEN)
+        os.system(f"dirb {target_url} {wordlist_path}")
+    else:
+        print_colored("Error: Wordlist file not found! Please check the full path.", Fore.RED)
 
     return None
 
