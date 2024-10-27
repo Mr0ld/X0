@@ -708,7 +708,7 @@ def get_real_ip(domain):
         answers = dns.resolver.resolve(domain, 'A')
         return [str(answer) for answer in answers]
     except Exception as e:
-        print_colored(f"Failed to resolve IP: {e}", Fore.RED)
+        print_colored(f"Failed to resolve IP: {e}", Fore.GREEN)
         return None
 
 # جمع المعلومات عن الموقع
@@ -1004,7 +1004,6 @@ def check_security_headers(headers):
 
 
 # دالة لاستخراج عناوين البريد الإلكتروني وأرقام الهواتف
-
 def extract_emails_and_phones(url):
     try:
         response = requests.get(url)
@@ -1013,8 +1012,11 @@ def extract_emails_and_phones(url):
         # البحث عن عناوين البريد الإلكتروني باستخدام تعبيرات نمطية متقدمة
         emails = re.findall(r"[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|hotmail\.com|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})", content)
         
-        # البحث عن أرقام الهواتف بتنسيق دولي + أو بصيغ محلية
-        phones = re.findall(r"\+?\d{1,3}[-.\s]?\(?\d{1,4}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}", content)
+        # البحث عن أرقام الهواتف بتنسيق دولي أو محلي (تأكد من وجود 8 إلى 15 رقمًا فقط)
+        phones = re.findall(r"\+?\d{1,3}[-.\s]?\(?\d{2,4}?\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}[-.\s]?\d{0,4}", content)
+        
+        # تصفية الأرقام بحيث تكون ضمن نطاق معين للطول للتحقق من صحتها
+        valid_phones = [phone for phone in phones if 8 <= len(re.sub(r'\D', '', phone)) <= 15]
 
         # طباعة عناوين البريد الإلكتروني إن وجدت
         if emails:
@@ -1025,9 +1027,9 @@ def extract_emails_and_phones(url):
             print_colored("No Email Addresses Found", Fore.RED)
 
         # طباعة أرقام الهواتف إن وجدت
-        if phones:
+        if valid_phones:
             print_colored("Phone Numbers Found:", Fore.GREEN)
-            for phone in phones:
+            for phone in valid_phones:
                 print_colored(phone, Fore.LIGHTCYAN_EX)
         else:
             print_colored("No Phone Numbers Found", Fore.RED)
