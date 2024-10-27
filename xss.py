@@ -862,7 +862,20 @@ def check_subnet(domain):
     resultscal = requests.get(urlscal).text
     print_colored(f"Subnet Calculation:\n{resultscal}", Fore.GREEN)
 
-# فحص المنافذ باستخدام Nmap
+# بداية الفحص بسؤال المستخدم
+def start_port_check():
+    choice = input(Fore.MAGENTA + "Do you want to perform a port scan? (Yes/y or No/n): " + Style.RESET_ALL).strip().lower()
+    
+    if choice in ['yes', 'y','YES', 'Y','Yes']:
+        # إذا كانت الإجابة نعم، ننتقل مباشرة لدالة check_ports
+        check_ports()
+    elif choice in ['NO', 'no','N', 'n','No']:
+        # إذا كانت الإجابة لا، يتم إيقاف الفحص مع إظهار رسالة
+        print_colored("⚠️Port scan was not performed on the website.", Fore.RED)
+    else:
+        print_colored("🔴 Invalid choice. Please enter Yes/y or No/n.", Fore.RED)
+
+
 def check_ports(ip):
     slow_print("Select an option :", Fore.YELLOW, delay=0.01)
     print_colored("1. Scan open ports and their versions", Fore.CYAN)
@@ -978,34 +991,34 @@ def check_security_headers(headers):
 
 
 # دالة لاستخراج عناوين البريد الإلكتروني وأرقام الهواتف
+
 def extract_emails_and_phones(url):
     try:
         response = requests.get(url)
         content = response.text
 
-        # البحث عن عناوين البريد الإلكتروني باستخدام تعبيرات نمطية دقيقة
-        email_pattern = r"[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|hotmail\.com|outlook\.com|icloud\.com|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})"
-        emails = re.findall(email_pattern, content)
+        # البحث عن عناوين البريد الإلكتروني باستخدام تعبيرات نمطية متقدمة
+        emails = re.findall(r"[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|hotmail\.com|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})", content)
         
-        # البحث عن أرقام الهواتف باستخدام تعبيرات نمطية دقيقة (يجب أن تحتوي على رمز الدولة أو "+" أو رقم بين 10-15 رقم)
-        phone_pattern = r"(\+?\d{1,3}[-.\s]?)?(\(?\d{1,4}\)?[-.\s]?)?\d{3}[-.\s]?\d{3,4}[-.\s]?\d{3,4}"
-        phones = re.findall(phone_pattern, content)
+        # البحث عن أرقام الهواتف بتنسيق دولي + أو بصيغ محلية
+        phones = re.findall(r"\+?\d{1,3}[-.\s]?\(?\d{1,4}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}", content)
 
-        # عرض عناوين البريد الإلكتروني التي تم العثور عليها
+        # طباعة عناوين البريد الإلكتروني إن وجدت
         if emails:
             print_colored("Email Addresses Found:", Fore.GREEN)
-            for email in set(emails):  # استخدام set لإزالة التكرارات
+            for email in emails:
                 print_colored(email, Fore.LIGHTCYAN_EX)
         else:
             print_colored("No Email Addresses Found", Fore.RED)
 
-        # عرض أرقام الهواتف التي تم العثور عليها
+        # طباعة أرقام الهواتف إن وجدت
         if phones:
             print_colored("Phone Numbers Found:", Fore.GREEN)
-            for phone in set("".join(phone) for phone in phones):  # إزالة التكرارات وتجميع كل أجزاء الرقم
+            for phone in phones:
                 print_colored(phone, Fore.LIGHTCYAN_EX)
         else:
             print_colored("No Phone Numbers Found", Fore.RED)
+
     except Exception as e:
         print_colored(f"Error extracting emails and phones: {e}", Fore.RED)
 
