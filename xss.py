@@ -895,7 +895,7 @@ def scan_open_ports(ip):
             print_colored("Wrong choice 🚫 Please choose a valid option.", Fore.RED)
 
     print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.YELLOW)
-    command = f"nmap -T5 -sT -p {port_range} {ip}"
+    command = f"nmap -T5 -sT -sV -p {port_range} --script-timeout 15s {ip}"
     
     try:
         result = subprocess.check_output(command, shell=True, text=True)
@@ -921,7 +921,7 @@ def scan_ports_for_vulnerabilities(ip):
             print_colored("Wrong choice 🚫 Please choose a valid option.", Fore.RED)
 
     print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.YELLOW)
-    command = f"nmap -T5 -p {port_range} --script http-vuln-cve2017-5638,ssl-enum-ciphers {ip}"
+    command = f"nmap -T5 -sV -O --script vuln,exploit,auth,intrusive -p {port_range}  --script-args vulns.showall=1 --script-timeout 15s {ip}"
 
     try:
         result = subprocess.check_output(command, shell=True, text=True)
@@ -945,18 +945,18 @@ def check_vulnerabilities(ip, port):
             print_colored(f"Checking vulnerabilities on port {port} with script: {script}...", Fore.YELLOW)
             result = subprocess.check_output(command, shell=True, text=True)
             if result:
-                print_colored(f"Vulnerability found with {script}: {result}", Fore.RED)
+                print_colored(f"Vulnerability found with {script}: {result}", Fore.GREEN)
                 vulnerabilities_found = True
             else:
-                print_colored(f"No vulnerabilities found with script: {script}", Fore.GREEN)
+                print_colored(f"No vulnerabilities found with script: {script}", Fore.RED)
         except subprocess.CalledProcessError as e:
             print_colored(f"Error checking vulnerabilities: {e}", Fore.RED)
 
     if not vulnerabilities_found:
-        print_colored(f"No vulnerabilities found on port {port} after checking all scripts.", Fore.GREEN)
+        print_colored(f"No vulnerabilities found on port {port} after checking all scripts.", Fore.LIGHTYELLOW_EX)
 
     # قائمة برؤوس الأمان الشائعة
-    security_headers = {
+    check_security_headers = {
         "Content-Security-Policy": "Content Security Policy",
         "Strict-Transport-Security": "Strict Transport Security",
         "X-Content-Type-Options": "X Content Type Options",
