@@ -755,62 +755,28 @@ def gather_info(url):
     print_colored(f"CMS : ", Fore.GREEN)
     print_colored(f" {tcms} ", Fore.RED)
 
-    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
-
-    # فحص حماية Cloudflare
+    print_colored("========================================", Fore.CYAN)
     check_cloudflare(domain)
-
-    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
-
-    # فحص robots.txt
+    print_colored("========================================", Fore.CYAN)
     check_robots(url)
-
-    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
-
-    # معلومات WHOIS
+    print_colored("========================================", Fore.CYAN)
     check_whois(domain)
-
-    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
-
-    # معلومات GEO IP
+    print_colored("========================================", Fore.CYAN)
     check_geoip(domain)
-
-    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
-
-    # فحص DNS
+    print_colored("========================================", Fore.CYAN)
     check_dns(domain)
-
-    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
-
-    # حساب Subnet
+    print_colored("========================================", Fore.CYAN)
     check_subnet(domain)
-
-    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
-
-    # تحليل ملفات JavaScript
+    print_colored("========================================", Fore.CYAN)
     analyze_js(url)
-
-    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
-
-    # فحص الرؤوس الأمنية الأساسية
+    print_colored("========================================", Fore.CYAN)
     check_security_headers(wsheaders)
-
-    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
-
-    # البحث عن عناوين البريد الإلكتروني وأرقام الهواتف
+    print_colored("========================================", Fore.CYAN)
     extract_emails_and_phones(url)
+    print_colored("========================================", Fore.CYAN)
 
-    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
-
-    #سؤال المستخدم عن فحث المنافذ
-    start_port_check()
+    start_port_check(ip)
     
-    # فحص المنافذ باستخدام Nmap
-    check_ports(ip)
-    
-    
-
-    # العودة إلى القائمة الرئيسية بعد انتهاء الفحص
     return_to_menu()
 
 # فحص SSL
@@ -871,38 +837,20 @@ def check_subnet(domain):
     resultscal = requests.get(urlscal).text
     print_colored(f"Subnet Calculation:\n{resultscal}", Fore.GREEN)
 
-# بداية الفحص بسؤال المستخدم
-def start_port_check():
+# دالة فحص المنافذ باستخدام Nmap
+def start_port_check(ip):
     choice = input(Fore.MAGENTA + "Do you want to perform a port scan? (Yes/y or No/n): " + Style.RESET_ALL).strip().lower()
-    
     if choice in ['yes', 'y']:
-        
         check_ports(ip)
     elif choice in ['no', 'n']:
-        # إذا كانت الإجابة لا، يتم إيقاف الفحص مع إظهار رسالة
         print_colored("⚠️ Port scan was not performed on the website.", Fore.RED)
     else:
         print_colored("🔴 Invalid choice. Please enter Yes/y or No/n.", Fore.RED)
 
 def check_ports(ip):
-    slow_print("Select an option:", Fore.YELLOW, delay=0.03)
-    print_colored("1. Scan open ports and their versions", Fore.CYAN)
-    print_colored("2. Scan ports and check for vulnerabilities", Fore.CYAN)
-    
-    option = input(Fore.MAGENTA + "Enter your choice (1 or 2): " + Style.RESET_ALL).strip()
-
-    if option == '1':
-        scan_open_ports(ip)
-    elif option == '2':
-        scan_ports_for_vulnerabilities(ip)
-    else:
-        print_colored("Invalid option. Please choose 1 or 2.", Fore.RED)
-
-def check_ports(ip):
-    slow_print("Select an option :", Fore.YELLOW, delay=0.01)
-    print_colored("1. Scan open ports and their versions", Fore.CYAN)
-    print_colored("2. Scan ports and check for vulnerabilities", Fore.CYAN)
-    
+    print_colored("Select an option:", Fore.YELLOW)
+    print("1. Scan open ports and their versions")
+    print("2. Scan ports and check for vulnerabilities")
     option = input(Fore.MAGENTA + "Enter your choice (1 or 2): " + Style.RESET_ALL).strip()
 
     if option == '1':
