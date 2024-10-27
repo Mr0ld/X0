@@ -841,24 +841,11 @@ def check_subnet(domain):
 def start_port_check(ip):
     choice = input(Fore.MAGENTA + "Do you want to perform a port scan? (Yes/y or No/n): " + Style.RESET_ALL).strip().lower()
     if choice in ['yes', 'y']:
-        check_ports(ip)
+        scan_open_ports(ip)
     elif choice in ['no', 'n']:
         print_colored("⚠️ Port scan was not performed on the website.", Fore.RED)
     else:
         print_colored("🔴 Invalid choice. Please enter Yes/y or No/n.", Fore.RED)
-
-def check_ports(ip):
-    print_colored("Select an option:", Fore.YELLOW)
-    print("1. Scan open ports and their versions")
-    print("2. Scan ports and check for vulnerabilities")
-    option = input(Fore.MAGENTA + "Enter your choice (1 or 2): " + Style.RESET_ALL).strip()
-
-    if option == '1':
-        scan_open_ports(ip)
-    elif option == '2':
-        scan_ports_for_vulnerabilities(ip)
-    else:
-        print_colored("Invalid option. Please choose 1 or 2.", Fore.RED)
 
 # فحص المنافذ المفتوحة
 def scan_open_ports(ip):
@@ -877,7 +864,7 @@ def scan_open_ports(ip):
         else:
             print_colored("Wrong choice 🚫 Please choose a valid option.", Fore.RED)
 
-    print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.YELLOW)
+    print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.CYAN)
     command = f"nmap -T5 -sT -p {port_range} --script-timeout 2s {ip}"
     
     try:
@@ -885,58 +872,6 @@ def scan_open_ports(ip):
         print_colored(result, Fore.CYAN)
     except subprocess.CalledProcessError as e:
         print_colored(f"Error with port scanning: {e}", Fore.RED)
-
-# فحص المنافذ للبحث عن الثغرات
-def scan_ports_for_vulnerabilities(ip):
-    while True:
-        choice = input(Fore.MAGENTA + "Do you want to specify the number of ports to scan for vulnerabilities? (Yes/y or No/n) : " + Style.RESET_ALL).strip().lower()
-        if choice in ['yes', 'y']:
-            try:
-                max_ports = int(input(Fore.YELLOW + "Enter the number of ports to scan for vulnerabilities (e.g., 300): " + Style.RESET_ALL))
-                port_range = f'1-{max_ports}'
-                break
-            except ValueError:
-                print_colored("Please enter a valid number.", Fore.RED)
-        elif choice in ['no', 'n']:
-            port_range = '1-65535'
-            break
-        else:
-            print_colored("Wrong choice 🚫 Please choose a valid option.", Fore.RED)
-
-    print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.YELLOW)
-    command = f"nmap -T5 -sV -p {port_range} --script http-vuln-cve2017-5638,ssl-enum-ciphers {ip}"
-
-    try:
-        result = subprocess.check_output(command, shell=True, text=True)
-        print_colored(result, Fore.CYAN)
-    except subprocess.CalledProcessError as e:
-        print_colored(f"Error with port scanning: {e}", Fore.RED)
-
-# التحقق من الثغرات باستخدام سكربتات محددة لكل منفذ
-def check_vulnerabilities(ip, port):
-    scripts = [
-        'http-vuln-cve2017-5638',
-        'ssl-enum-ciphers',
-        'http-security-headers',
-        'smb-vuln-ms17-010'
-    ]
-    
-    vulnerabilities_found = False
-    for script in scripts:
-        command = f"nmap -p {port} --script={script} {ip}"
-        try:
-            print_colored(f"Checking vulnerabilities on port {port} with script: {script}...", Fore.YELLOW)
-            result = subprocess.check_output(command, shell=True, text=True)
-            if result:
-                print_colored(f"Vulnerability found with {script}: {result}", Fore.GREEN)
-                vulnerabilities_found = True
-            else:
-                print_colored(f"No vulnerabilities found with script: {script}", Fore.RED)
-        except subprocess.CalledProcessError as e:
-            print_colored(f"Error checking vulnerabilities: {e}", Fore.RED)
-
-    if not vulnerabilities_found:
-        print_colored(f"No vulnerabilities found on port {port} after checking all scripts.", Fore.LIGHTYELLOW_EX)
 
 # دالة لفحص الرؤوس الأمنية الأساسية
 def check_security_headers(headers):
