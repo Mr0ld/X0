@@ -967,57 +967,30 @@ def print_colored(text, color):
     print(color + text + Style.RESET_ALL)
 
 def file_exists(full_path):
-    # التحقق من وجود الملف باستخدام المسار الكامل المدخل
-    if os.path.isfile(full_path):
-        return full_path
+    # تحويل المسار إلى مسار مطلق والتحقق من وجود الملف
+    abs_path = os.path.abspath(full_path)
+    if os.path.isfile(abs_path):
+        return abs_path
     else:
         return None
 
 def start_vulnerability_scan(target_url, wordlist_path):
     # التحقق من المسار وبدء الفحص
-    if file_exists(wordlist_path):
+    wordlist_path = file_exists(wordlist_path)
+    if wordlist_path:
         print_colored(f"Wordlist found at {wordlist_path}. Starting scan...", Fore.GREEN)
         os.system(f"dirb {target_url} {wordlist_path}")
     else:
         print_colored("Error: Wordlist file not found! Please check the full path.", Fore.RED)
 
-    return None
-
-def nmap_scan():
-    print_colored("\nNmap Scan Options", Fore.CYAN)
-    print_colored("1. Deep Vulnerability Scan", Fore.GREEN)
-    print_colored("2. Medium Vulnerability Scan", Fore.GREEN)
-    print_colored("3. Custom Command", Fore.GREEN)
-    print_colored("4. Back to Main Menu", Fore.GREEN)
-    
-    while True:
-        choice = input(Fore.YELLOW + "Choose an option: ")
-        if choice not in ['1', '2', '3', '4']:
-            print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
-            continue
-        
-        target = input(Fore.YELLOW + "Enter the target URL/IP: ")
-
-        if choice == '1':
-            os.system(f"nmap --stats-every 15s  -v -n -p- -sT -f -A  --script vulners --script=vuln {target}")
-        elif choice == '2':
-            os.system(f"nmap --stats-every 15s -T5 -sT -sV -f -A -Pn {target}")
-        elif choice == '3':
-            command = input(Fore.YELLOW + "Enter Nmap command: ")
-            os.system(f"nmap {command} {target}")
-        elif choice == '4':
-            return  # Back to Main Menu
-        break
-
 def path_discovery():
     print_colored("\nPath Discovery Options", Fore.CYAN)
     print_colored("1. Hidden Path Discovery", Fore.GREEN)
-    print_colored("2. Admin Page Brute Force", Fore.GREEN)
-    print_colored("3. Back to Main Menu", Fore.GREEN)
+    print_colored("2. Back to Main Menu", Fore.GREEN)
 
     while True:
         choice = input(Fore.YELLOW + "Choose an option: ")
-        if choice not in ['1', '2', '3']:
+        if choice not in ['1', '2']:
             print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
             continue
         
@@ -1026,61 +999,15 @@ def path_discovery():
             
             # Prompt until valid wordlist file is provided
             while True:
-                wordlist_name = input(Fore.YELLOW + "Enter Wordlist filename (with extension): ")
-                wordlist_path = file_exists(wordlist_name)
-                
-                if wordlist_path:
-                    os.system(f"dirb {target_url} {wordlist_path}")
+                wordlist_path = input(Fore.YELLOW + "Enter full path to Wordlist (with extension): ")
+                if file_exists(wordlist_path):
+                    start_vulnerability_scan(target_url, wordlist_path)
                     break
                 else:
-                    print_colored("Error: Wordlist file not found! Please enter a valid filename.", Fore.RED)
-        
+                    print_colored("Error: Wordlist file not found! Please enter a valid path.", Fore.RED)
+
         elif choice == '2':
-            target_url = input(Fore.YELLOW + "Enter admin page URL: ")
-            print_colored("1. Brute force both username and password", Fore.GREEN)
-            print_colored("2. Brute force password only", Fore.GREEN)
-            
-            while True:
-                bf_choice = input(Fore.YELLOW + "Choose an option: ")
-                if bf_choice not in ['1', '2']:
-                    print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
-                    continue
-                
-                if bf_choice == '1':
-                    # Loop until valid username and password wordlists are provided
-                    while True:
-                        userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): ")
-                        passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
-                        userlist_path = file_exists(userlist_name)
-                        passlist_path = file_exists(passlist_name)
-                        
-                        if userlist_path and passlist_path:
-                            os.system(f"hydra -L {userlist_path} -P {passlist_path} {target_url}")
-                            break
-                        else:
-                            print_colored("Error: One or both wordlist files not found! Please check the filenames.", Fore.RED)
-                    break
-                    
-                elif bf_choice == '2':
-                    username = input(Fore.YELLOW + "Enter username: ")
-                    
-                    # Loop until valid password wordlist is provided
-                    while True:
-                        passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
-                        passlist_path = file_exists(passlist_name)
-                        
-                        if passlist_path:
-                            os.system(f"hydra -l {username} -P {passlist_path} {target_url}")
-                            break
-                        else:
-                            print_colored("Error: Password wordlist file not found! Please enter a valid filename.", Fore.RED)
-                    break
-
-        elif choice == '3':
             return  # Back to Main Menu
-        break
 
-
-# تشغيل القائمة الرئيسية
 if __name__ == "__main__":
-    main_menu()
+    path_discovery()
