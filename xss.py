@@ -864,7 +864,7 @@ def check_subnet(domain):
 
 # فحص المنافذ باستخدام Nmap
 def check_ports(ip):
-    print_colored("Select an option:", Fore.CYAN)
+    slow_print("Select an option :", Fore.YELLOW, delay=0.01)
     print_colored("1. Scan open ports and their versions", Fore.CYAN)
     print_colored("2. Scan ports and check for vulnerabilities", Fore.CYAN)
     
@@ -895,7 +895,7 @@ def scan_open_ports(ip):
             print_colored("Wrong choice 🚫 Please choose a valid option.", Fore.RED)
 
     print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.YELLOW)
-    command = f"nmap -T5 -sT -sV -p {port_range} --script-timeout 2s {ip}"
+    command = f"nmap -T5 -sT -p {port_range} --script-timeout 2s {ip}"
     
     try:
         result = subprocess.check_output(command, shell=True, text=True)
@@ -921,7 +921,7 @@ def scan_ports_for_vulnerabilities(ip):
             print_colored("Wrong choice 🚫 Please choose a valid option.", Fore.RED)
 
     print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.YELLOW)
-    command = f"nmap -T5 -p {port_range} --script http-vuln-cve2017-5638,ssl-enum-ciphers {ip}"
+    command = f"nmap -T5 -sV -p {port_range} --script http-vuln-cve2017-5638,ssl-enum-ciphers {ip}"
 
     try:
         result = subprocess.check_output(command, shell=True, text=True)
