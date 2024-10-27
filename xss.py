@@ -1006,7 +1006,7 @@ def nmap_scan():
         target = input(Fore.YELLOW + "Enter the target URL/IP: ")
 
         if choice == '1':
-            os.system(f"nmap --stats-every 15s  -v -n -p- -sT -f -A --script-banner --script=vuln {target}")
+            os.system(f"nmap --stats-every 15s  -v -n -p- -sT -f -A  --script vulners --script=vuln {target}")
         elif choice == '2':
             os.system(f"nmap --stats-every 15s -T5 -sT -sV -f -A -Pn {target}")
         elif choice == '3':
