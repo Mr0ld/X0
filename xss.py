@@ -895,7 +895,7 @@ def scan_open_ports(ip):
             print_colored("Wrong choice 🚫 Please choose a valid option.", Fore.RED)
 
     print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.YELLOW)
-    command = f"nmap -T5 -sT -sV -p {port_range} --script-timeout 15s {ip}"
+    command = f"nmap -T5 -sT -sV -p {port_range} --script-timeout 2s {ip}"
     
     try:
         result = subprocess.check_output(command, shell=True, text=True)
@@ -983,27 +983,32 @@ def extract_emails_and_phones(url):
         response = requests.get(url)
         content = response.text
 
-        # البحث عن عناوين البريد الإلكتروني باستخدام التعبيرات النمطية
-        emails = re.findall(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", content)
+        # البحث عن عناوين البريد الإلكتروني باستخدام تعبيرات نمطية دقيقة
+        email_pattern = r"[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|hotmail\.com|outlook\.com|icloud\.com|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})"
+        emails = re.findall(email_pattern, content)
         
-        # البحث عن أرقام الهواتف باستخدام التعبيرات النمطية
-        phones = re.findall(r"\+?\d[\d -]{8,}\d", content)
+        # البحث عن أرقام الهواتف باستخدام تعبيرات نمطية دقيقة (يجب أن تحتوي على رمز الدولة أو "+" أو رقم بين 10-15 رقم)
+        phone_pattern = r"(\+?\d{1,3}[-.\s]?)?(\(?\d{1,4}\)?[-.\s]?)?\d{3}[-.\s]?\d{3,4}[-.\s]?\d{3,4}"
+        phones = re.findall(phone_pattern, content)
 
+        # عرض عناوين البريد الإلكتروني التي تم العثور عليها
         if emails:
             print_colored("Email Addresses Found:", Fore.GREEN)
-            for email in emails:
+            for email in set(emails):  # استخدام set لإزالة التكرارات
                 print_colored(email, Fore.LIGHTCYAN_EX)
         else:
             print_colored("No Email Addresses Found", Fore.RED)
 
+        # عرض أرقام الهواتف التي تم العثور عليها
         if phones:
             print_colored("Phone Numbers Found:", Fore.GREEN)
-            for phone in phones:
+            for phone in set("".join(phone) for phone in phones):  # إزالة التكرارات وتجميع كل أجزاء الرقم
                 print_colored(phone, Fore.LIGHTCYAN_EX)
         else:
             print_colored("No Phone Numbers Found", Fore.RED)
     except Exception as e:
         print_colored(f"Error extracting emails and phones: {e}", Fore.RED)
+
         
 
 # تحليل ملفات JavaScript
