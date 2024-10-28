@@ -1070,7 +1070,7 @@ def path_discovery():
                         passlist_path = file_exists(passlist_name)
                         
                         if passlist_path:
-                            os.system(f"/data/data/com.termux/files/home/bin/hydra -l {username} -P {passlist_path} {target_url}")
+                            os.system(f"/data/data/com.termux/files/home/bin/hydra -l {username} -P {passlist_path} http-form-post://{target_url}/path-to-login:username_field=^USER^&password_field=^PASS^:F=incorrect_login_message")
                             break
                         else:
                             print_colored("Error: Password wordlist file not found! Please enter a valid filename.", Fore.RED)
