@@ -963,19 +963,43 @@ def return_to_menu():
             
             
 
-def print_colored(text, color):
-    print(color + text + Style.RESET_ALL)
+def print_colored(message, color):
+    print(color + message + Fore.RESET)
 
 def file_exists(full_path):
-    # تحويل المسار إلى مسار مطلق والتحقق من وجود الملف
     abs_path = os.path.abspath(full_path)
-    if os.path.isfile(abs_path):
-        return abs_path
-    else:
-        return None
+    return abs_path if os.path.isfile(abs_path) else None
+
+def detect_fields(url):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        username_field, password_field = None, None
+        for input_tag in soup.find_all('input'):
+            if 'name' in input_tag.attrs:
+                if 'user' in input_tag['name'].lower():
+                    username_field = input_tag['name']
+                elif 'pass' in input_tag['name'].lower():
+                    password_field = input_tag['name']
+        
+        if username_field and password_field:
+            print(f"Detected username field: {username_field}")
+            print(f"Detected password field: {password_field}")
+            confirm = input("Use these fields? (Y/N): ").strip().lower()
+            if confirm == 'y':
+                return username_field, password_field
+        
+        username_field = input("Enter the username field name: ")
+        password_field = input("Enter the password field name: ")
+        return username_field, password_field
+
+    except requests.RequestException as e:
+        print(f"Error fetching the URL: {e}")
+        return None, None
 
 def start_vulnerability_scan(target_url, wordlist_path):
-    # التحقق من المسار وبدء الفحص
     wordlist_path = file_exists(wordlist_path)
     if wordlist_path:
         print_colored(f"Wordlist found at {wordlist_path}. Starting scan...", Fore.GREEN)
@@ -1023,12 +1047,9 @@ def path_discovery():
         
         if choice == '1':
             target_url = input(Fore.YELLOW + "Enter target URL: ")
-            
-            # Prompt until valid wordlist file is provided
             while True:
                 wordlist_name = input(Fore.YELLOW + "Enter Wordlist filename (with extension): ")
                 wordlist_path = file_exists(wordlist_name)
-                
                 if wordlist_path:
                     start_vulnerability_scan(target_url, wordlist_path)
                     break
@@ -1047,7 +1068,6 @@ def path_discovery():
                     continue
                 
                 if bf_choice == '1':
-                    # Loop until valid username and password wordlists are provided
                     while True:
                         userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): ")
                         passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
@@ -1055,22 +1075,26 @@ def path_discovery():
                         passlist_path = file_exists(passlist_name)
                         
                         if userlist_path and passlist_path:
-                            os.system(f"/usr/local/bin/hydra -L {userlist_path} -P {passlist_path} {target_url}")
+                            username_field, password_field = detect_fields(target_url)
+                            if username_field and password_field:
+                                os.system(f"/data/data/com.termux/files/home/bin/hydra -L {userlist_path} -P {passlist_path} "
+                                          f"http-form-post://{target_url}:/admin:{username_field}=^USER^&{password_field}=^PASS^:F=incorrect_login_message")
                             break
                         else:
                             print_colored("Error: One or both wordlist files not found! Please check the filenames.", Fore.RED)
                     break
-                    
+
                 elif bf_choice == '2':
                     username = input(Fore.YELLOW + "Enter username: ")
-                    
-                    # Loop until valid password wordlist is provided
                     while True:
                         passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
                         passlist_path = file_exists(passlist_name)
                         
                         if passlist_path:
-                            os.system(f"/data/data/com.termux/files/home/bin/hydra -l {username} -P {passlist_path} http-form-post://{target_url}/path-to-login:username_field=^USER^&password_field=^PASS^:F=incorrect_login_message")
+                            username_field, password_field = detect_fields(target_url)
+                            if username_field and password_field:
+                                os.system(f"/data/data/com.termux/files/home/bin/hydra -l {username} -P {passlist_path} "
+                                          f"http-form-post://{target_url}:{username_field}=^USER^&{password_field}=^PASS^:F=incorrect_login_message")
                             break
                         else:
                             print_colored("Error: Password wordlist file not found! Please enter a valid filename.", Fore.RED)
@@ -1080,6 +1104,23 @@ def path_discovery():
             return  # Back to Main Menu
         break
 
-# تشغيل القائمة الرئيسية
+def main_menu():
+    print_colored("\nMain Menu", Fore.CYAN)
+    print_colored("1. Nmap Scan", Fore.GREEN)
+    print_colored("2. Path Discovery", Fore.GREEN)
+    print_colored("3. Exit", Fore.GREEN)
+
+    while True:
+        choice = input(Fore.YELLOW + "Choose an option: ")
+        if choice == '1':
+            nmap_scan()
+        elif choice == '2':
+            path_discovery()
+        elif choice == '3':
+            print_colored("Exiting...", Fore.RED)
+            break
+        else:
+            print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
+
 if __name__ == "__main__":
     main_menu()
