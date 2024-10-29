@@ -963,7 +963,6 @@ def return_to_menu():
             
             
 
-init(autoreset=True)
 
 def print_colored(text, color):
     print(color + text + Fore.RESET)
@@ -1009,7 +1008,7 @@ def detect_fields(url):
         return None, None
 
 def start_vulnerability_scan(target_url, wordlist_path):
-    wordlist_path = find_wordlist(wordlist_path)
+    wordlist_path = file_exists(wordlist_path)
     dirb_path = get_tool_path("dirb")
     if wordlist_path:
         print_colored(f"Wordlist found at {wordlist_path}. Starting scan...", Fore.GREEN)
@@ -1033,7 +1032,7 @@ def path_discovery():
             target_url = input(Fore.YELLOW + "Enter target URL: ")
             while True:
                 wordlist_name = input(Fore.YELLOW + "Enter Wordlist filename (with extension): ")
-                wordlist_path = find_wordlist(wordlist_name)
+                wordlist_path = file_exists(wordlist_name)
                 if wordlist_path:
                     start_vulnerability_scan(target_url, wordlist_path)
                     break
@@ -1055,8 +1054,8 @@ def path_discovery():
                     while True:
                         userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): ")
                         passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
-                        userlist_path = find_wordlist(userlist_name)
-                        passlist_path = find_wordlist(passlist_name)
+                        userlist_path = file_exists(userlist_name)
+                        passlist_path = file_exists(passlist_name)
                         
                         if userlist_path and passlist_path:
                             username_field, password_field = detect_fields(target_url)
@@ -1072,7 +1071,7 @@ def path_discovery():
                     username = input(Fore.YELLOW + "Enter username: ")
                     while True:
                         passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
-                        passlist_path = find_wordlist(passlist_name)
+                        passlist_path = file_exists(passlist_name)
                         
                         if passlist_path:
                             username_field, password_field = detect_fields(target_url)
@@ -1113,8 +1112,7 @@ def nmap_scan():
         elif choice == '4':
             return  # Back to Main Menu
         break
-
-
+        
 
 # تشغيل البرنامج
 if __name__ == "__main__":
