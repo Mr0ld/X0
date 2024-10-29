@@ -963,12 +963,19 @@ def return_to_menu():
             
             
 
-def print_colored(message, color):
-    print(color + message + Fore.RESET)
+init(autoreset=True)
 
-def file_exists(full_path):
-    abs_path = os.path.abspath(full_path)
-    return abs_path if os.path.isfile(abs_path) else None
+def print_colored(text, color):
+    print(color + text + Fore.RESET)
+
+def file_exists(filename):
+    # التحقق من الملف سواء كان مسارًا كاملًا أو اسمًا فقط
+    if os.path.isfile(filename):
+        return os.path.abspath(filename)
+    else:
+        # المحاولة في المسار الحالي إذا لم يتم العثور على الملف كمسار كامل
+        current_dir_path = os.path.join(os.getcwd(), filename)
+        return current_dir_path if os.path.isfile(current_dir_path) else None
 
 def get_hydra_path():
     # تحديد المسار بناءً على النظام
@@ -1060,7 +1067,7 @@ def path_discovery():
                         if userlist_path and passlist_path:
                             username_field, password_field = detect_fields(target_url)
                             if username_field and password_field:
-                                os.system(f"/data/data/com.termux/files/home/bin/hydra -L {userlist_path} -P {passlist_path} "
+                                os.system(f"{get_hydra_path()} -L {userlist_path} -P {passlist_path} "
                                           f"http-form-post://{target_url}:/admin:{username_field}=^USER^&{password_field}=^PASS^:F=incorrect_login_message")
                             break
                         else:
@@ -1076,7 +1083,7 @@ def path_discovery():
                         if passlist_path:
                             username_field, password_field = detect_fields(target_url)
                             if username_field and password_field:
-                                os.system(f"/data/data/com.termux/files/home/bin/hydra -l {username} -P {passlist_path} "
+                                os.system(f"{get_hydra_path()} -l {username} -P {passlist_path} "
                                           f"http-form-post://{target_url}:{username_field}=^USER^&{password_field}=^PASS^:F=incorrect_login_message")
                             break
                         else:
@@ -1086,9 +1093,6 @@ def path_discovery():
         elif choice == '3':
             return  # Back to Main Menu
         break
-        
-
-
 
 def nmap_scan():
     print_colored("\nNmap Scan Options", Fore.CYAN)
@@ -1115,8 +1119,7 @@ def nmap_scan():
         elif choice == '4':
             return  # Back to Main Menu
         break
-        
-        
+
 
 # تشغيل البرنامج
 if __name__ == "__main__":
