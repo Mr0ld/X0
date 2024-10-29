@@ -970,6 +970,15 @@ def file_exists(full_path):
     abs_path = os.path.abspath(full_path)
     return abs_path if os.path.isfile(abs_path) else None
 
+def get_hydra_path():
+    # تحديد المسار بناءً على النظام
+    if os.name == 'posix':
+        # كالي لينيكس
+        return "/usr/local/bin/hydra"
+    else:
+        # تيرميكس
+        return "/data/data/com.termux/files/home/bin/hydra"
+
 def detect_fields(url):
     try:
         response = requests.get(url)
@@ -983,14 +992,14 @@ def detect_fields(url):
                     username_field = input_tag['name']
                 elif 'pass' in input_tag['name'].lower():
                     password_field = input_tag['name']
-        
+
         if username_field and password_field:
             print(f"Detected username field: {username_field}")
             print(f"Detected password field: {password_field}")
             confirm = input("Use these fields? (Y/N): ").strip().lower()
             if confirm == 'y':
                 return username_field, password_field
-        
+
         username_field = input("Enter the username field name: ")
         password_field = input("Enter the password field name: ")
         return username_field, password_field
@@ -1006,32 +1015,6 @@ def start_vulnerability_scan(target_url, wordlist_path):
         os.system(f"dirb {target_url} {wordlist_path} -A 'Mozilla/5.0'")
     else:
         print_colored("Error: Wordlist file not found! Please check the full path.", Fore.RED)
-
-def nmap_scan():
-    print_colored("\nNmap Scan Options", Fore.CYAN)
-    print_colored("1. Deep Vulnerability Scan", Fore.GREEN)
-    print_colored("2. Medium Vulnerability Scan", Fore.GREEN)
-    print_colored("3. Custom Command", Fore.GREEN)
-    print_colored("4. Back to Main Menu", Fore.GREEN)
-    
-    while True:
-        choice = input(Fore.YELLOW + "Choose an option: ")
-        if choice not in ['1', '2', '3', '4']:
-            print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
-            continue
-        
-        target = input(Fore.YELLOW + "Enter the target URL/IP: ")
-
-        if choice == '1':
-            os.system(f"nmap --stats-every 15s -v -n -p- -sT -f -A --script vulners --script=vuln {target}")
-        elif choice == '2':
-            os.system(f"nmap --stats-every 15s -T5 -sT -sV -f -A -Pn {target}")
-        elif choice == '3':
-            command = input(Fore.YELLOW + "Enter Nmap command: ")
-            os.system(f"nmap {command} {target}")
-        elif choice == '4':
-            return  # Back to Main Menu
-        break
 
 def path_discovery():
     print_colored("\nPath Discovery Options", Fore.CYAN)
@@ -1103,24 +1086,38 @@ def path_discovery():
         elif choice == '3':
             return  # Back to Main Menu
         break
+        
 
-def main_menu():
-    print_colored("\nMain Menu", Fore.CYAN)
-    print_colored("1. Nmap Scan", Fore.GREEN)
-    print_colored("2. Path Discovery", Fore.GREEN)
-    print_colored("3. Exit", Fore.GREEN)
 
+
+def nmap_scan():
+    print_colored("\nNmap Scan Options", Fore.CYAN)
+    print_colored("1. Deep Vulnerability Scan", Fore.GREEN)
+    print_colored("2. Medium Vulnerability Scan", Fore.GREEN)
+    print_colored("3. Custom Command", Fore.GREEN)
+    print_colored("4. Back to Main Menu", Fore.GREEN)
+    
     while True:
         choice = input(Fore.YELLOW + "Choose an option: ")
-        if choice == '1':
-            nmap_scan()
-        elif choice == '2':
-            path_discovery()
-        elif choice == '3':
-            print_colored("Exiting...", Fore.RED)
-            break
-        else:
+        if choice not in ['1', '2', '3', '4']:
             print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
+            continue
+        
+        target = input(Fore.YELLOW + "Enter the target URL/IP: ")
 
+        if choice == '1':
+            os.system(f"nmap --stats-every 15s -v -n -p- -sT -f -A --script vulners --script=vuln {target}")
+        elif choice == '2':
+            os.system(f"nmap --stats-every 15s -T5 -sT -sV -f -A -Pn {target}")
+        elif choice == '3':
+            command = input(Fore.YELLOW + "Enter Nmap command: ")
+            os.system(f"nmap {command} {target}")
+        elif choice == '4':
+            return  # Back to Main Menu
+        break
+        
+        
+
+# تشغيل البرنامج
 if __name__ == "__main__":
     main_menu()
