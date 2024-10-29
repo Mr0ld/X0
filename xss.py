@@ -992,7 +992,7 @@ def check_url_validity():
 def start_vulnerability_scan(target_url, wordlist_path):
     dirb_path = get_tool_path("dirb")
     print_colored("Starting Dirb scan...", Fore.GREEN)
-    os.system(f"dirb {target_url} {wordlist_path} -A 'Mozilla/5.0'")
+    os.system(f"dirb {target_url} {wordlist_path}")
 
 def path_discovery():
     print_colored("\nPath Discovery Options", Fore.CYAN)
@@ -1011,7 +1011,7 @@ def path_discovery():
         if choice == '1':
             wordlist_name = input(Fore.YELLOW + "Enter Wordlist filename (with extension): ")
             start_vulnerability_scan(target_url, wordlist_name)
-        
+
         elif choice == '2':
             print_colored("1. Brute force both username and password", Fore.GREEN)
             print_colored("2. Brute force password only", Fore.GREEN)
@@ -1024,16 +1024,26 @@ def path_discovery():
                 if bf_choice == '1':
                     userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): ")
                     passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
-                    os.system(f"hydra -L {userlist_name} -P {passlist_name} http-form-post://{target_url}:/admin:user=^USER^&pass=^PASS^:F=incorrect_login_message")
+                    os.system(f"hydra -L {userlist_name} -P {passlist_name} http-form-post://{target_url}/admin:user=^USER^&pass=^PASS^:F=incorrect_login_message")
                 
                 elif bf_choice == '2':
                     username = input(Fore.YELLOW + "Enter username: ")
                     passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
-                    os.system(f"hydra -l {username} -P {passlist_name} http-form-post://{target_url}:/admin:user=^USER^&pass=^PASS^:F=incorrect_login_message")
+                    os.system(f"hydra -l {username} -P {passlist_name} http-form-post://{target_url}/admin:user={username}&pass=^PASS^:F=incorrect_login_message")
 
         elif choice == '3':
             return  # Back to Main Menu
-        break
+        
+        # Ask the user if they want to return to the main menu or exit
+        end_choice = input(Fore.YELLOW + "Do you want to return to the main menu (1) or exit (2)? ")
+        if end_choice == '1':
+            continue  # Return to the beginning of the while loop
+        elif end_choice == '2':
+            print_colored("Thank you for using the tool. Goodbye!", Fore.CYAN)
+            exit()
+        else:
+            print_colored("Invalid choice! Exiting.", Fore.RED)
+            exit()
 
 def nmap_scan():
     print_colored("\nNmap Scan Options", Fore.CYAN)
@@ -1041,7 +1051,7 @@ def nmap_scan():
     print_colored("2. Medium Vulnerability Scan", Fore.GREEN)
     print_colored("3. Custom Command", Fore.GREEN)
     print_colored("4. Back to Main Menu", Fore.GREEN)
-    
+
     while True:
         choice = input(Fore.YELLOW + "Choose an option: ")
         if choice not in ['1', '2', '3', '4']:
@@ -1059,7 +1069,17 @@ def nmap_scan():
             os.system(f"nmap {command} {target}")
         elif choice == '4':
             return  # Back to Main Menu
-        break
+        
+        # Ask the user if they want to return to the main menu or exit
+        end_choice = input(Fore.YELLOW + "Do you want to return to the main menu (1) or exit (2)? ")
+        if end_choice == '1':
+            continue  # Return to the beginning of the while loop
+        elif end_choice == '2':
+            print_colored("Thank you for using the tool. Goodbye!", Fore.CYAN)
+            exit()
+        else:
+            print_colored("Invalid choice! Exiting.", Fore.RED)
+            exit()
 
 
 
