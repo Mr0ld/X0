@@ -992,7 +992,7 @@ def check_url_validity():
 def start_vulnerability_scan(target_url, wordlist_path):
     dirb_path = get_tool_path("dirb")
     print_colored("Starting Dirb scan...", Fore.GREEN)
-    os.system(f"{dirb_path} {target_url} {wordlist_path} -A 'Mozilla/5.0'")
+    os.system(f"dirb {target_url} {wordlist_path} -A 'Mozilla/5.0'")
 
 def path_discovery():
     print_colored("\nPath Discovery Options", Fore.CYAN)
@@ -1024,12 +1024,12 @@ def path_discovery():
                 if bf_choice == '1':
                     userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): ")
                     passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
-                    os.system(f"{get_tool_path('hydra')} -L {userlist_name} -P {passlist_name} http-form-post://{target_url}:/admin:user=^USER^&pass=^PASS^:F=incorrect_login_message")
+                    os.system(f"hydra -L {userlist_name} -P {passlist_name} http-form-post://{target_url}:/admin:user=^USER^&pass=^PASS^:F=incorrect_login_message")
                 
                 elif bf_choice == '2':
                     username = input(Fore.YELLOW + "Enter username: ")
                     passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
-                    os.system(f"{get_tool_path('hydra')} -l {username} -P {passlist_name} http-form-post://{target_url}:/admin:user=^USER^&pass=^PASS^:F=incorrect_login_message")
+                    os.system(f"hydra -l {username} -P {passlist_name} http-form-post://{target_url}:/admin:user=^USER^&pass=^PASS^:F=incorrect_login_message")
 
         elif choice == '3':
             return  # Back to Main Menu
