@@ -1065,4 +1065,4 @@ def nmap_scan():
 
 # Run the program
 if __name__ == "__main__":
-    main_menu())
+    main_menu()
