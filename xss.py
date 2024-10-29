@@ -967,54 +967,32 @@ def return_to_menu():
 def print_colored(text, color):
     print(color + text + Fore.RESET)
 
-def file_exists(full_path):
-    abs_path = os.path.abspath(full_path)
-    return abs_path if os.path.isfile(abs_path) else None
-
 def get_tool_path(tool_name):
-    # تحديد المسار بناءً على النظام والأداة
     if os.name == 'posix':
-        return f"/usr/local/bin/{tool_name}" if tool_name == "dirb" else f"/usr/local/bin/{tool_name}"
+        return f"/usr/local/bin/{tool_name}"
     else:
         return f"/data/data/com.termux/files/home/bin/{tool_name}"
 
-def detect_fields(url):
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, 'html.parser')
-
-        username_field, password_field = None, None
-        for input_tag in soup.find_all('input'):
-            if 'name' in input_tag.attrs:
-                if 'user' in input_tag['name'].lower():
-                    username_field = input_tag['name']
-                elif 'pass' in input_tag['name'].lower():
-                    password_field = input_tag['name']
-
-        if username_field and password_field:
-            print(f"Detected username field: {username_field}")
-            print(f"Detected password field: {password_field}")
-            confirm = input("Use these fields? (Y/N): ").strip().lower()
-            if confirm == 'y':
-                return username_field, password_field
-
-        username_field = input("Enter the username field name: ")
-        password_field = input("Enter the password field name: ")
-        return username_field, password_field
-
-    except requests.RequestException as e:
-        print(f"Error fetching the URL: {e}")
-        return None, None
+def check_url_validity():
+    while True:
+        url = input(Fore.YELLOW + "Enter target URL: ")
+        if "." not in url:
+            print_colored("Invalid URL format! Please include a valid domain.", Fore.RED)
+            continue
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                print_colored("Valid URL and reachable!", Fore.GREEN)
+                return url
+            else:
+                print_colored(f"Failed to connect to URL (Status: {response.status_code}).", Fore.RED)
+        except requests.RequestException:
+            print_colored("Connection error. Please enter a valid URL.", Fore.RED)
 
 def start_vulnerability_scan(target_url, wordlist_path):
-    wordlist_path = file_exists(wordlist_path)
     dirb_path = get_tool_path("dirb")
-    if wordlist_path:
-        print_colored(f"Wordlist found at {wordlist_path}. Starting scan...", Fore.GREEN)
-        os.system(f"{dirb_path} {target_url} {wordlist_path} -A 'Mozilla/5.0'")
-    else:
-        print_colored("Error: Wordlist file not found! Please check the full path.", Fore.RED)
+    print_colored("Starting Dirb scan...", Fore.GREEN)
+    os.system(f"{dirb_path} {target_url} {wordlist_path} -A 'Mozilla/5.0'")
 
 def path_discovery():
     print_colored("\nPath Discovery Options", Fore.CYAN)
@@ -1028,22 +1006,15 @@ def path_discovery():
             print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
             continue
         
+        target_url = check_url_validity()
+        
         if choice == '1':
-            target_url = input(Fore.YELLOW + "Enter target URL: ")
-            while True:
-                wordlist_name = input(Fore.YELLOW + "Enter Wordlist filename (with extension): ")
-                wordlist_path = file_exists(wordlist_name)
-                if wordlist_path:
-                    start_vulnerability_scan(target_url, wordlist_path)
-                    break
-                else:
-                    print_colored("Error: Wordlist file not found! Please enter a valid filename.", Fore.RED)
+            wordlist_name = input(Fore.YELLOW + "Enter Wordlist filename (with extension): ")
+            start_vulnerability_scan(target_url, wordlist_name)
         
         elif choice == '2':
-            target_url = input(Fore.YELLOW + "Enter admin page URL: ")
             print_colored("1. Brute force both username and password", Fore.GREEN)
             print_colored("2. Brute force password only", Fore.GREEN)
-            
             while True:
                 bf_choice = input(Fore.YELLOW + "Choose an option: ")
                 if bf_choice not in ['1', '2']:
@@ -1051,37 +1022,14 @@ def path_discovery():
                     continue
                 
                 if bf_choice == '1':
-                    while True:
-                        userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): ")
-                        passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
-                        userlist_path = file_exists(userlist_name)
-                        passlist_path = file_exists(passlist_name)
-                        
-                        if userlist_path and passlist_path:
-                            username_field, password_field = detect_fields(target_url)
-                            if username_field and password_field:
-                                os.system(f"{get_tool_path('hydra')} -L {userlist_path} -P {passlist_path} "
-                                          f"http-form-post://{target_url}:/admin:{username_field}=^USER^&{password_field}=^PASS^:F=incorrect_login_message")
-                            break
-                        else:
-                            print_colored("Error: One or both wordlist files not found! Please check the filenames.", Fore.RED)
-                    break
-
+                    userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): ")
+                    passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
+                    os.system(f"{get_tool_path('hydra')} -L {userlist_name} -P {passlist_name} http-form-post://{target_url}:/admin:user=^USER^&pass=^PASS^:F=incorrect_login_message")
+                
                 elif bf_choice == '2':
                     username = input(Fore.YELLOW + "Enter username: ")
-                    while True:
-                        passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
-                        passlist_path = file_exists(passlist_name)
-                        
-                        if passlist_path:
-                            username_field, password_field = detect_fields(target_url)
-                            if username_field and password_field:
-                                os.system(f"{get_tool_path('hydra')} -l {username} -P {passlist_path} "
-                                          f"http-form-post://{target_url}:{username_field}=^USER^&{password_field}=^PASS^:F=incorrect_login_message")
-                            break
-                        else:
-                            print_colored("Error: Password wordlist file not found! Please enter a valid filename.", Fore.RED)
-                    break
+                    passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
+                    os.system(f"{get_tool_path('hydra')} -l {username} -P {passlist_name} http-form-post://{target_url}:/admin:user=^USER^&pass=^PASS^:F=incorrect_login_message")
 
         elif choice == '3':
             return  # Back to Main Menu
@@ -1099,8 +1047,8 @@ def nmap_scan():
         if choice not in ['1', '2', '3', '4']:
             print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
             continue
-        
-        target = input(Fore.YELLOW + "Enter the target URL/IP: ")
+
+        target = check_url_validity()
 
         if choice == '1':
             os.system(f"nmap --stats-every 15s -v -n -p- -sT -f -A --script vulners --script=vuln {target}")
@@ -1112,8 +1060,9 @@ def nmap_scan():
         elif choice == '4':
             return  # Back to Main Menu
         break
-        
 
-# تشغيل البرنامج
+
+
+# Run the program
 if __name__ == "__main__":
-    main_menu()
+    main_menu())
