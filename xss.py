@@ -968,23 +968,19 @@ init(autoreset=True)
 def print_colored(text, color):
     print(color + text + Fore.RESET)
 
-def file_exists(filename):
-    # التحقق من الملف سواء كان مسارًا كاملًا أو اسمًا فقط
-    if os.path.isfile(filename):
-        return os.path.abspath(filename)
-    else:
-        # المحاولة في المسار الحالي إذا لم يتم العثور على الملف كمسار كامل
-        current_dir_path = os.path.join(os.getcwd(), filename)
-        return current_dir_path if os.path.isfile(current_dir_path) else None
+def find_wordlist(filename):
+    # البحث عن الملف في جميع المجلدات
+    for root, dirs, files in os.walk('/'):
+        if filename in files:
+            return os.path.join(root, filename)
+    return None
 
-def get_hydra_path():
-    # تحديد المسار بناءً على النظام
+def get_tool_path(tool_name):
+    # تحديد المسار بناءً على النظام والأداة
     if os.name == 'posix':
-        # كالي لينيكس
-        return "/usr/local/bin/hydra"
+        return f"/usr/local/bin/{tool_name}" if tool_name == "dirb" else f"/usr/local/bin/{tool_name}"
     else:
-        # تيرميكس
-        return "/data/data/com.termux/files/home/bin/hydra"
+        return f"/data/data/com.termux/files/home/bin/{tool_name}"
 
 def detect_fields(url):
     try:
@@ -1016,10 +1012,11 @@ def detect_fields(url):
         return None, None
 
 def start_vulnerability_scan(target_url, wordlist_path):
-    wordlist_path = file_exists(wordlist_path)
+    wordlist_path = find_wordlist(wordlist_path)
+    dirb_path = get_tool_path("dirb")
     if wordlist_path:
         print_colored(f"Wordlist found at {wordlist_path}. Starting scan...", Fore.GREEN)
-        os.system(f"dirb {target_url} {wordlist_path} -A 'Mozilla/5.0'")
+        os.system(f"{dirb_path} {target_url} {wordlist_path} -A 'Mozilla/5.0'")
     else:
         print_colored("Error: Wordlist file not found! Please check the full path.", Fore.RED)
 
@@ -1039,7 +1036,7 @@ def path_discovery():
             target_url = input(Fore.YELLOW + "Enter target URL: ")
             while True:
                 wordlist_name = input(Fore.YELLOW + "Enter Wordlist filename (with extension): ")
-                wordlist_path = file_exists(wordlist_name)
+                wordlist_path = find_wordlist(wordlist_name)
                 if wordlist_path:
                     start_vulnerability_scan(target_url, wordlist_path)
                     break
@@ -1061,13 +1058,13 @@ def path_discovery():
                     while True:
                         userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): ")
                         passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
-                        userlist_path = file_exists(userlist_name)
-                        passlist_path = file_exists(passlist_name)
+                        userlist_path = find_wordlist(userlist_name)
+                        passlist_path = find_wordlist(passlist_name)
                         
                         if userlist_path and passlist_path:
                             username_field, password_field = detect_fields(target_url)
                             if username_field and password_field:
-                                os.system(f"{get_hydra_path()} -L {userlist_path} -P {passlist_path} "
+                                os.system(f"{get_tool_path('hydra')} -L {userlist_path} -P {passlist_path} "
                                           f"http-form-post://{target_url}:/admin:{username_field}=^USER^&{password_field}=^PASS^:F=incorrect_login_message")
                             break
                         else:
@@ -1078,12 +1075,12 @@ def path_discovery():
                     username = input(Fore.YELLOW + "Enter username: ")
                     while True:
                         passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
-                        passlist_path = file_exists(passlist_name)
+                        passlist_path = find_wordlist(passlist_name)
                         
                         if passlist_path:
                             username_field, password_field = detect_fields(target_url)
                             if username_field and password_field:
-                                os.system(f"{get_hydra_path()} -l {username} -P {passlist_path} "
+                                os.system(f"{get_tool_path('hydra')} -l {username} -P {passlist_path} "
                                           f"http-form-post://{target_url}:{username_field}=^USER^&{password_field}=^PASS^:F=incorrect_login_message")
                             break
                         else:
@@ -1119,6 +1116,7 @@ def nmap_scan():
         elif choice == '4':
             return  # Back to Main Menu
         break
+
 
 
 # تشغيل البرنامج
