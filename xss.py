@@ -968,12 +968,9 @@ init(autoreset=True)
 def print_colored(text, color):
     print(color + text + Fore.RESET)
 
-def find_wordlist(filename):
-    # البحث عن الملف في جميع المجلدات
-    for root, dirs, files in os.walk('/'):
-        if filename in files:
-            return os.path.join(root, filename)
-    return None
+def file_exists(full_path):
+    abs_path = os.path.abspath(full_path)
+    return abs_path if os.path.isfile(abs_path) else None
 
 def get_tool_path(tool_name):
     # تحديد المسار بناءً على النظام والأداة
