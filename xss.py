@@ -989,6 +989,36 @@ def check_url_validity():
         except requests.RequestException:
             print_colored("Connection error. Please enter a valid URL.", Fore.RED)
 
+def extract_login_fields(url):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print("Error fetching the page:", e)
+        return None, None
+
+    soup = BeautifulSoup(response.text, 'html.parser')
+    fields = soup.find_all('input')
+    
+    username_field = None
+    password_field = None
+    
+    for field in fields:
+        field_name = field.get('name')
+        field_type = field.get('type')
+        
+        if field_type == 'text' and ('user' in field_name.lower() or 'email' in field_name.lower()):
+            username_field = field_name
+        elif field_type == 'password':
+            password_field = field_name
+
+    if username_field and password_field:
+        print(f"Username field: {username_field}, Password field: {password_field}")
+    else:
+        print("Could not find the username or password fields automatically.")
+    
+    return username_field, password_field
+
 def start_vulnerability_scan(target_url, wordlist_path):
     dirb_path = get_tool_path("dirb")
     print_colored("Starting Dirb scan...", Fore.GREEN)
@@ -1024,25 +1054,29 @@ def path_discovery():
                 if bf_choice == '1':
                     userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): ")
                     passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
-
-                    user_field = input(Fore.YELLOW + "Enter the actual username field on the site: ")
-                    pass_field = input(Fore.YELLOW + "Enter the actual password field on the site: ")
-
-                    os.system(f"hydra -L {userlist_name} -P {passlist_name} {target_url} http-form-post '/admin:{user_field}=^USER^&{pass_field}=^PASS^:F=Invalid username or password'")
+                    
+                    username_field, password_field = extract_login_fields(target_url)
+                    if username_field and password_field:
+                        os.system(f"hydra -L {userlist_name} -P {passlist_name} {target_url} http-form-post '/admin:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password'")
+                    else:
+                        print_colored("Failed to retrieve username or password fields for Hydra.", Fore.RED)
                 
                 elif bf_choice == '2':
                     username = input(Fore.YELLOW + "Enter username: ")
                     passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
-                    pass_field = input(Fore.YELLOW + "Enter the actual password field on the site: ")
 
-                    os.system(f"hydra -l {username} -P {passlist_name} {target_url} http-form-post '/admin:{pass_field}=^PASS^:F=Invalid username or password'")
+                    _, password_field = extract_login_fields(target_url)
+                    if password_field:
+                        os.system(f"hydra -l {username} -P {passlist_name} {target_url} http-form-post '/admin:{password_field}=^PASS^:F=Invalid username or password'")
+                    else:
+                        print_colored("Failed to retrieve password field for Hydra.", Fore.RED)
 
         elif choice == '3':
             return  # Back to Main Menu
         
         end_choice = input(Fore.YELLOW + "Do you want to return to the main menu (1) or exit (2)? ")
         if end_choice == '1':
-            continue  # Return to the beginning of the while loop
+            continue
         elif end_choice == '2':
             print_colored("Thank you for using the tool. Goodbye!", Fore.CYAN)
             exit()
@@ -1077,7 +1111,7 @@ def nmap_scan():
         
         end_choice = input(Fore.YELLOW + "Do you want to return to the main menu (1) or exit (2)? ")
         if end_choice == '1':
-            continue  # Return to the beginning of the while loop
+            continue
         elif end_choice == '2':
             print_colored("Thank you for using the tool. Goodbye!", Fore.CYAN)
             exit()
@@ -1086,6 +1120,5 @@ def nmap_scan():
             exit()
 
 
-# تشغيل القائمة الرئيسية
 if __name__ == "__main__":
     main_menu()
