@@ -1022,14 +1022,59 @@ def path_discovery():
                     continue
                 
                 if bf_choice == '1':
-                    userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): ")
-                    passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
-                    os.system(f"hydra -L {userlist_name} -P {passlist_name} http-form-post://{target_url}/admin:user=^USER^&pass=^PASS^:F=incorrect_login_message")
+                    while True:
+                        userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): ")
+                        if not os.path.isfile(userlist_name):
+                            print_colored("Invalid username wordlist file path!", Fore.RED)
+                            continue
+                        break
+
+                    while True:
+                        passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
+                        if not os.path.isfile(passlist_name):
+                            print_colored("Invalid password wordlist file path!", Fore.RED)
+                            continue
+                        break
+
+                    while True:
+                        user_field = input(Fore.YELLOW + "Enter the actual username field on the site: ")
+                        if user_field.strip() == "":
+                            print_colored("Invalid field! Please enter a valid username field.", Fore.RED)
+                            continue
+                        break
+
+                    while True:
+                        pass_field = input(Fore.YELLOW + "Enter the actual password field on the site: ")
+                        if pass_field.strip() == "":
+                            print_colored("Invalid field! Please enter a valid password field.", Fore.RED)
+                            continue
+                        break
+
+                    os.system(f"hydra -L {userlist_name} -P {passlist_name} {target_url} http-form-post '/admin:{user_field}=^USER^&{pass_field}=^PASS^:F=Invalid username or password'")
                 
                 elif bf_choice == '2':
-                    username = input(Fore.YELLOW + "Enter username: ")
-                    passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
-                    os.system(f"hydra -l {username} -P {passlist_name} http-form-post://{target_url}/admin:user={username}&pass=^PASS^:F=incorrect_login_message")
+                    while True:
+                        username = input(Fore.YELLOW + "Enter username: ")
+                        if username.strip() == "":
+                            print_colored("Invalid username! Please enter a valid username.", Fore.RED)
+                            continue
+                        break
+
+                    while True:
+                        passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
+                        if not os.path.isfile(passlist_name):
+                            print_colored("Invalid password wordlist file path!", Fore.RED)
+                            continue
+                        break
+
+                    while True:
+                        pass_field = input(Fore.YELLOW + "Enter the actual password field on the site: ")
+                        if pass_field.strip() == "":
+                            print_colored("Invalid field! Please enter a valid password field.", Fore.RED)
+                            continue
+                        break
+
+                    os.system(f"hydra -l {username} -P {passlist_name} {target_url} http-form-post '/admin:{pass_field}=^PASS^:F=Invalid username or password'")
 
         elif choice == '3':
             return  # Back to Main Menu
@@ -1081,8 +1126,6 @@ def nmap_scan():
             print_colored("Invalid choice! Exiting.", Fore.RED)
             exit()
 
-
-
 # Run the program
 if __name__ == "__main__":
-    main_menu()
+    path_discovery()
