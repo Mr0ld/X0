@@ -964,6 +964,9 @@ def return_to_menu():
             
 
 
+def print_colored(text, color):
+    print(color + text + Fore.RESET)
+
 def get_tool_path(tool_name):
     if os.name == 'posix':
         return f"/usr/local/bin/{tool_name}"
@@ -1054,8 +1057,8 @@ def path_discovery():
                     
                     username_field, password_field = extract_login_fields(target_url)
                     if username_field and password_field:
-                        login_path = target_url.split("/", 3)[-1]
-                        os.system(f"hydra -L {userlist_name} -P {passlist_name} {target_url} http-form-post '{login_path}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password'")
+                        login_path = '/' + '/'.join(target_url.split("/", 3)[3:])  # استخدم المسار فقط
+                        os.system(f"hydra -L {userlist_name} -P {passlist_name} {target_url} http-post-form '{login_path}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password'")
                     else:
                         print_colored("Failed to retrieve username or password fields for Hydra.", Fore.RED)
                 
@@ -1065,8 +1068,8 @@ def path_discovery():
 
                     _, password_field = extract_login_fields(target_url)
                     if password_field:
-                        login_path = target_url.split("/", 3)[-1]
-                        os.system(f"hydra -l {username} -P {passlist_name} {target_url} http-form-post '{login_path}:{password_field}=^PASS^:F=Invalid username or password'")
+                        login_path = '/' + '/'.join(target_url.split("/", 3)[3:])  # استخدم المسار فقط
+                        os.system(f"hydra -l {username} -P {passlist_name} {target_url} http-post-form '{login_path}:{password_field}=^PASS^:F=Invalid username or password'")
                     else:
                         print_colored("Failed to retrieve password field for Hydra.", Fore.RED)
 
