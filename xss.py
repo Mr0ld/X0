@@ -1056,7 +1056,7 @@ def path_discovery():
                 passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
                 target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): ")
 
-                hydra_cmd = f"hydra -I -L {userlist_name} -P {passlist_name} https-post-form://{target_url_no_protocol}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password -t 1 -W 3"
+                hydra_cmd = f'hydra -I -L {userlist_name} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 1 -W 3'
                 print_colored(f"Running command: {hydra_cmd}", Fore.CYAN)
                 os.system(hydra_cmd)
 
@@ -1065,7 +1065,7 @@ def path_discovery():
                 passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
                 target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): ")
 
-                hydra_cmd = f"hydra -I -l {username} -P {passlist_name} https-post-form://{target_url_no_protocol}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password -t 1 -W 3"
+                hydra_cmd = f'hydra -I -l {username} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 1 -W 3'
                 print_colored(f"Running command: {hydra_cmd}", Fore.CYAN)
                 os.system(hydra_cmd)
 
@@ -1081,6 +1081,7 @@ def path_discovery():
         else:
             print_colored("Invalid choice! Exiting.", Fore.RED)
             exit()
+
 
 
 
