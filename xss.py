@@ -974,7 +974,7 @@ def get_tool_path(tool_name):
         return f"/data/data/com.termux/files/home/bin/{tool_name}"
 
 def check_url_validity():
-    target_url = input(Fore.YELLOW + "Enter target URL (include 'http:// or https://'): ")
+    target_url = input(Fore.YELLOW + "Enter target URL to check fields (include 'http:// or https://'): ")
     try:
         response = requests.get(target_url)
         if response.status_code == 200:
@@ -1031,53 +1031,43 @@ def path_discovery():
             print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
             continue
         
-        target_url = check_url_validity()
-        
-        if choice == '1':
-            wordlist_name = input(Fore.YELLOW + "Enter Wordlist filename (with extension): ")
-            start_vulnerability_scan(target_url, wordlist_name)
-
-        elif choice == '2':
+        if choice == '2':
             print_colored("1. Brute force both username and password", Fore.GREEN)
             print_colored("2. Brute force password only", Fore.GREEN)
-            while True:
-                bf_choice = input(Fore.YELLOW + "Choose an option: ")
-                if bf_choice not in ['1', '2']:
-                    print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
-                    continue
-                
-                username_field, password_field = extract_login_fields(target_url)
-                if not (username_field and password_field):
-                    print_colored("Could not detect username or password fields.", Fore.RED)
-                    break
-                
-                # Ask for confirmation from the user to use detected fields
-                username_field, password_field = confirm_fields(username_field, password_field)
+            bf_choice = input(Fore.YELLOW + "Choose an option: ")
+            if bf_choice not in ['1', '2']:
+                print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
+                continue
 
-                login_path = target_url.split("/", 3)[-1]
-                
-                # Check if required fields are present
-                if bf_choice == '1':
-                    userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): ")
-                    passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
-                    
-                    if userlist_name and passlist_name and username_field and password_field:
-                        hydra_cmd = f"hydra -I -L {userlist_name} -P {passlist_name} https-post-form://{target_url}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password -t 1 -W 3"
-                        print_colored(f"Running command: {hydra_cmd}", Fore.CYAN)
-                        os.system(hydra_cmd)
-                    else:
-                        print_colored("Error: Missing required fields for Hydra command.", Fore.RED)
-                
-                elif bf_choice == '2':
-                    username = input(Fore.YELLOW + "Enter username: ")
-                    passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
+            # Step 1: Get target URL for field detection
+            target_url = check_url_validity()
+            username_field, password_field = extract_login_fields(target_url)
+            
+            if not (username_field and password_field):
+                print_colored("Could not detect username or password fields.", Fore.RED)
+                continue
+            
+            # Step 2: Confirm fields with user
+            username_field, password_field = confirm_fields(username_field, password_field)
+            
+            # Step 3: Get wordlists and re-ask target URL without protocol
+            if bf_choice == '1':
+                userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): ")
+                passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
+                target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): ")
 
-                    if username and passlist_name and password_field:
-                        hydra_cmd = f"hydra -I -l {username} -P {passlist_name} https-post-form://{target_url}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password -t 1 -W 3"
-                        print_colored(f"Running command: {hydra_cmd}", Fore.CYAN)
-                        os.system(hydra_cmd)
-                    else:
-                        print_colored("Error: Missing required fields for Hydra command.", Fore.RED)
+                hydra_cmd = f"hydra -I -L {userlist_name} -P {passlist_name} https-post-form://{target_url_no_protocol}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password -t 1 -W 3"
+                print_colored(f"Running command: {hydra_cmd}", Fore.CYAN)
+                os.system(hydra_cmd)
+
+            elif bf_choice == '2':
+                username = input(Fore.YELLOW + "Enter username: ")
+                passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
+                target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): ")
+
+                hydra_cmd = f"hydra -I -l {username} -P {passlist_name} https-post-form://{target_url_no_protocol}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password -t 1 -W 3"
+                print_colored(f"Running command: {hydra_cmd}", Fore.CYAN)
+                os.system(hydra_cmd)
 
         elif choice == '3':
             return  # Back to Main Menu
