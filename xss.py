@@ -1018,6 +1018,13 @@ def confirm_fields(username_field, password_field):
         username_field = input(Fore.YELLOW + "Enter the username field manually: ")
         password_field = input(Fore.YELLOW + "Enter the password field manually: ")
         return username_field, password_field
+        
+        
+def start_vulnerability_scan(target_url, wordlist_path):
+    dirb_path = get_tool_path("dirb")
+    print_colored("Starting Dirb scan...", Fore.GREEN)
+    os.system(f"dirb {target_url} {wordlist_path}")
+    
 
 def path_discovery():
     print_colored("\nPath Discovery Options", Fore.CYAN)
@@ -1030,6 +1037,11 @@ def path_discovery():
         if choice not in ['1', '2', '3']:
             print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
             continue
+            
+            
+        if choice == '1':
+            wordlist_name = input(Fore.YELLOW + "Enter Wordlist filename (with extension): ")
+            start_vulnerability_scan(target_url, wordlist_name)
         
         if choice == '2':
             print_colored("1. Brute force both username and password", Fore.GREEN)
