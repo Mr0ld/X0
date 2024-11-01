@@ -1056,17 +1056,24 @@ def path_discovery():
 
                 login_path = '/' + '/'.join(target_url.split("/", 3)[3:])
                 
+                # Check if required fields are present
                 if bf_choice == '1':
                     userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): ")
                     passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
                     
-                    os.system(f"hydra -I -L {userlist_name} -P {passlist_name} https-post-form://{target_url}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password -t 1 -W 3")
+                    if userlist_name and passlist_name and username_field and password_field:
+                        os.system(f"hydra -I -L {userlist_name} -P {passlist_name} https-post-form://{target_url}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password -t 1 -W 3")
+                    else:
+                        print_colored("Error: Missing required fields for Hydra command.", Fore.RED)
                 
                 elif bf_choice == '2':
                     username = input(Fore.YELLOW + "Enter username: ")
                     passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
 
-                    os.system(f"hydra -I -l {username} -P {passlist_name} https-post-form://{target_url}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password -t 1 -W 3")
+                    if username and passlist_name and password_field:
+                        os.system(f"hydra -I -l {username} -P {passlist_name} https-post-form://{target_url}:{password_field}=^PASS^:F=Invalid username or password -t 1 -W 3")
+                    else:
+                        print_colored("Error: Missing required fields for Hydra command.", Fore.RED)
 
         elif choice == '3':
             return  # Back to Main Menu
