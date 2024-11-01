@@ -1058,7 +1058,7 @@ def path_discovery():
                     username_field, password_field = extract_login_fields(target_url)
                     if username_field and password_field:
                         login_path = '/' + '/'.join(target_url.split("/", 3)[3:])  # استخدم المسار فقط
-                        os.system(f"hydra -L {userlist_name} -P {passlist_name} {target_url} http-post-form '{login_path}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password'")
+                        os.system(f"hydra -L {userlist_name} -P {passlist_name} https-post-form://{target_url}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password")
                     else:
                         print_colored("Failed to retrieve username or password fields for Hydra.", Fore.RED)
                 
