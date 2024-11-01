@@ -1007,27 +1007,17 @@ def extract_login_fields(url):
         print_colored(f"Error fetching login fields: {e}", Fore.RED)
         return None, None
 
-    soup = BeautifulSoup(response.text, 'html.parser')
-    fields = soup.find_all('input')
+def confirm_fields(username_field, password_field):
+    print_colored(f"Detected username field: {username_field}", Fore.CYAN)
+    print_colored(f"Detected password field: {password_field}", Fore.CYAN)
     
-    username_field = None
-    password_field = None
-    
-    for field in fields:
-        field_name = field.get('name')
-        field_type = field.get('type')
-        
-        if field_type == 'text' and ('user' in field_name.lower() or 'email' in field_name.lower()):
-            username_field = field_name
-        elif field_type == 'password':
-            password_field = field_name
-
-    if username_field and password_field:
-        print(f"Username field: {username_field}, Password field: {password_field}")
+    choice = input(Fore.YELLOW + "Do you want to use these fields? (Yes/No): ").strip().lower()
+    if choice in ['yes', 'y']:
+        return username_field, password_field
     else:
-        print("Could not find the username or password fields automatically.")
-    
-    return username_field, password_field
+        username_field = input(Fore.YELLOW + "Enter the username field manually: ")
+        password_field = input(Fore.YELLOW + "Enter the password field manually: ")
+        return username_field, password_field
 
 def path_discovery():
     print_colored("\nPath Discovery Options", Fore.CYAN)
@@ -1060,6 +1050,9 @@ def path_discovery():
                 if not (username_field and password_field):
                     print_colored("Could not detect username or password fields.", Fore.RED)
                     break
+                
+                # Ask for confirmation from the user to use detected fields
+                username_field, password_field = confirm_fields(username_field, password_field)
 
                 login_path = '/' + '/'.join(target_url.split("/", 3)[3:])
                 
