@@ -1054,7 +1054,7 @@ def path_discovery():
                 # Ask for confirmation from the user to use detected fields
                 username_field, password_field = confirm_fields(username_field, password_field)
 
-                login_path = '/' + '/'.join(target_url.split("/", 3)[3:])
+                login_path = target_url.split("/", 3)[-1]
                 
                 # Check if required fields are present
                 if bf_choice == '1':
@@ -1062,7 +1062,9 @@ def path_discovery():
                     passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
                     
                     if userlist_name and passlist_name and username_field and password_field:
-                        os.system(f"hydra -I -L {userlist_name} -P {passlist_name} https-post-form://{target_url}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password -t 1 -W 3")
+                        hydra_cmd = f"hydra -I -L {userlist_name} -P {passlist_name} https-post-form://{target_url}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password -t 1 -W 3"
+                        print_colored(f"Running command: {hydra_cmd}", Fore.CYAN)
+                        os.system(hydra_cmd)
                     else:
                         print_colored("Error: Missing required fields for Hydra command.", Fore.RED)
                 
@@ -1071,7 +1073,9 @@ def path_discovery():
                     passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
 
                     if username and passlist_name and password_field:
-                        os.system(f"hydra -I -l {username} -P {passlist_name} https-post-form://{target_url}:{password_field}=^PASS^:F=Invalid username or password -t 1 -W 3")
+                        hydra_cmd = f"hydra -I -l {username} -P {passlist_name} https-post-form://{target_url}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password -t 1 -W 3"
+                        print_colored(f"Running command: {hydra_cmd}", Fore.CYAN)
+                        os.system(hydra_cmd)
                     else:
                         print_colored("Error: Missing required fields for Hydra command.", Fore.RED)
 
@@ -1087,6 +1091,7 @@ def path_discovery():
         else:
             print_colored("Invalid choice! Exiting.", Fore.RED)
             exit()
+
 
 
 def nmap_scan():
