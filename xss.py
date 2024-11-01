@@ -1036,17 +1036,15 @@ def path_discovery():
             print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
             continue
         
-        # إزالة التحقق من الرابط عند استخدام Hydra فقط
+        target_url = check_url_validity()
+        
         if choice == '1':
-            target_url = check_url_validity()  # يبقى التحقق هنا
             wordlist_name = input(Fore.YELLOW + "Enter Wordlist filename (with extension): ")
             start_vulnerability_scan(target_url, wordlist_name)
 
         elif choice == '2':
-            target_url = input(Fore.YELLOW + "Enter target URL: ")  # بدون التحقق من صلاحية الرابط لـ Hydra
             print_colored("1. Brute force both username and password", Fore.GREEN)
             print_colored("2. Brute force password only", Fore.GREEN)
-            
             while True:
                 bf_choice = input(Fore.YELLOW + "Choose an option: ")
                 if bf_choice not in ['1', '2']:
@@ -1060,7 +1058,12 @@ def path_discovery():
                     username_field, password_field = extract_login_fields(target_url)
                     if username_field and password_field:
                         login_path = '/' + '/'.join(target_url.split("/", 3)[3:])  # استخدم المسار فقط
-                        os.system(f"hydra -L {userlist_name} -P {passlist_name} https-post-form://{target_url}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password")
+                        hydra_command = (
+                            f"hydra -I -L {userlist_name} -P {passlist_name} "
+                            f"https-post-form://{target_url}:{username_field}=^USER^&{password_field}=^PASS^:"
+                            f"F=Invalid username or password -t 1 -W 3"
+                        )
+                        os.system(hydra_command)
                     else:
                         print_colored("Failed to retrieve username or password fields for Hydra.", Fore.RED)
                 
@@ -1071,7 +1074,12 @@ def path_discovery():
                     _, password_field = extract_login_fields(target_url)
                     if password_field:
                         login_path = '/' + '/'.join(target_url.split("/", 3)[3:])  # استخدم المسار فقط
-                        os.system(f"hydra -l {username} -P {passlist_name} {target_url} http-post-form '{login_path}:{password_field}=^PASS^:F=Invalid username or password'")
+                        hydra_command = (
+                            f"hydra -I -l {username} -P {passlist_name} "
+                            f"{target_url} http-post-form '{login_path}:{password_field}=^PASS^:"
+                            f"F=Invalid username or password' -t 1 -W 3"
+                        )
+                        os.system(hydra_command)
                     else:
                         print_colored("Failed to retrieve password field for Hydra.", Fore.RED)
 
@@ -1087,6 +1095,7 @@ def path_discovery():
         else:
             print_colored("Invalid choice! Exiting.", Fore.RED)
             exit()
+
 
 def nmap_scan():
     print_colored("\nNmap Scan Options", Fore.CYAN)
