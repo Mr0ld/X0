@@ -965,7 +965,7 @@ def return_to_menu():
 
 
 def print_colored(text, color):
-    print(color + text + Fore.RESET)
+    print(color + text + Style.RESET_ALL)
 
 def get_tool_path(tool_name):
     if os.name == 'posix':
@@ -1018,13 +1018,12 @@ def confirm_fields(username_field, password_field):
         username_field = input(Fore.YELLOW + "Enter the username field manually: ")
         password_field = input(Fore.YELLOW + "Enter the password field manually: ")
         return username_field, password_field
-        
-        
+
 def start_vulnerability_scan(target_url, wordlist_path):
     dirb_path = get_tool_path("dirb")
     print_colored("Starting Dirb scan...", Fore.GREEN)
     os.system(f"dirb {target_url} {wordlist_path}")
-    
+    return_to_menu()
 
 def path_discovery():
     print_colored("\nPath Discovery Options", Fore.CYAN)
@@ -1037,13 +1036,14 @@ def path_discovery():
         if choice not in ['1', '2', '3']:
             print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
             continue
-            
+        
+        target_url = check_url_validity()
             
         if choice == '1':
             wordlist_name = input(Fore.YELLOW + "Enter Wordlist filename (with extension): ")
             start_vulnerability_scan(target_url, wordlist_name)
         
-        if choice == '2':
+        elif choice == '2':
             print_colored("1. Brute force both username and password", Fore.GREEN)
             print_colored("2. Brute force password only", Fore.GREEN)
             bf_choice = input(Fore.YELLOW + "Choose an option: ")
@@ -1051,7 +1051,6 @@ def path_discovery():
                 print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
                 continue
 
-            # Step 1: Get target URL for field detection
             target_url = check_url_validity()
             username_field, password_field = extract_login_fields(target_url)
             
@@ -1059,50 +1058,28 @@ def path_discovery():
                 print_colored("Could not detect username or password fields.", Fore.RED)
                 continue
             
-            # Step 2: Confirm fields with user
             username_field, password_field = confirm_fields(username_field, password_field)
             
-            # Step 3: Get wordlists and re-ask target URL without protocol
             if bf_choice == '1':
                 userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): ")
                 passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
                 target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): ")
 
-                hydra_cmd = f'hydra -I -L {userlist_name} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 0,5 -W 1'
-                print_colored(f"Running command: {hydra_cmd}", Fore.CYAN)
-                os.system(hydra_cmd)
+                print_colored("Starting brute force attack...", Fore.GREEN)
+                os.system(f'hydra -I -L {userlist_name} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 0,5 -W 1')
 
             elif bf_choice == '2':
                 username = input(Fore.YELLOW + "Enter username: ")
                 passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
                 target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): ")
 
-                hydra_cmd = f'hydra -I -l {username} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 0,2 -W 1'
-                print_colored(f"Running command: {hydra_cmd}", Fore.CYAN)
-                os.system(hydra_cmd)
+                print_colored("Starting brute force attack...", Fore.GREEN)
+                os.system(f'hydra -I -l {username} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 0,2 -W 1')
+
+            return_to_menu()
 
         elif choice == '3':
-            return  # Back to Main Menu
-        
-# العودة إلى القائمة الرئيسية أو إيقاف الأداة
-def return_to_menu():
-    print_colored("\n Do you want to :", Fore.CYAN)
-    print("1. Return to the checklist")
-    print("2. Terminate the program")
-    
-    while True:
-        choice = input(Fore.YELLOW + "Choose an option: " + Style.RESET_ALL)
-        if choice == "1":
-            main_menu()
-            break
-        elif choice == "2":
-            print_colored("Thank you for using the tool ❤️", Fore.CYAN)
-            exit()
-        else:
-            print_colored("Incorrect choice 🚫 Please choose a valid option.", Fore.RED)
-
-
-
+            return
 
 def nmap_scan():
     print_colored("\nNmap Scan Options", Fore.CYAN)
@@ -1120,18 +1097,22 @@ def nmap_scan():
         target = check_url_validity()
 
         if choice == '1':
+            print_colored("Starting deep vulnerability scan...", Fore.GREEN)
             os.system(f"nmap --stats-every 15s -v -n -p- -sT -f -A --script vulners --script=vuln {target}")
         elif choice == '2':
+            print_colored("Starting medium vulnerability scan...", Fore.GREEN)
             os.system(f"nmap --stats-every 15s -T5 -sT -sV -f -A -Pn {target}")
         elif choice == '3':
             command = input(Fore.YELLOW + "Enter Nmap command: ")
+            print_colored("Starting custom Nmap scan...", Fore.GREEN)
             os.system(f"nmap {command} {target}")
         elif choice == '4':
-            return  # Back to Main Menu
-        
-# العودة إلى القائمة الرئيسية أو إيقاف الأداة
+            return
+
+        return_to_menu()
+
 def return_to_menu():
-    print_colored("\n Do you want to :", Fore.CYAN)
+    print_colored("\nDo you want to:", Fore.CYAN)
     print("1. Return to the checklist")
     print("2. Terminate the program")
     
@@ -1145,7 +1126,6 @@ def return_to_menu():
             exit()
         else:
             print_colored("Incorrect choice 🚫 Please choose a valid option.", Fore.RED)
-
 
 if __name__ == "__main__":
     main_menu()
