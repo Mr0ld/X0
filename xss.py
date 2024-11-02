@@ -1068,7 +1068,7 @@ def path_discovery():
                 passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
                 target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): ")
 
-                hydra_cmd = f'hydra -I -L {userlist_name} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 1 -W 3'
+                hydra_cmd = f'hydra -I -L {userlist_name} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 0,5 -W 1'
                 print_colored(f"Running command: {hydra_cmd}", Fore.CYAN)
                 os.system(hydra_cmd)
 
@@ -1077,22 +1077,29 @@ def path_discovery():
                 passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
                 target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): ")
 
-                hydra_cmd = f'hydra -I -l {username} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 1 -W 3'
+                hydra_cmd = f'hydra -I -l {username} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 0,2 -W 1'
                 print_colored(f"Running command: {hydra_cmd}", Fore.CYAN)
                 os.system(hydra_cmd)
 
         elif choice == '3':
             return  # Back to Main Menu
         
-        end_choice = input(Fore.YELLOW + "Do you want to return to the main menu (1) or exit (2)? ")
-        if end_choice == '1':
-            continue
-        elif end_choice == '2':
-            print_colored("Thank you for using the tool. Goodbye!", Fore.CYAN)
+# العودة إلى القائمة الرئيسية أو إيقاف الأداة
+def return_to_menu():
+    print_colored("\n Do you want to :", Fore.CYAN)
+    print("1. Return to the checklist")
+    print("2. Terminate the program")
+    
+    while True:
+        choice = input(Fore.YELLOW + "Choose an option: " + Style.RESET_ALL)
+        if choice == "1":
+            main_menu()
+            break
+        elif choice == "2":
+            print_colored("Thank you for using the tool ❤️", Fore.CYAN)
             exit()
         else:
-            print_colored("Invalid choice! Exiting.", Fore.RED)
-            exit()
+            print_colored("Incorrect choice 🚫 Please choose a valid option.", Fore.RED)
 
 
 
@@ -1122,15 +1129,22 @@ def nmap_scan():
         elif choice == '4':
             return  # Back to Main Menu
         
-        end_choice = input(Fore.YELLOW + "Do you want to return to the main menu (1) or exit (2)? ")
-        if end_choice == '1':
-            continue
-        elif end_choice == '2':
-            print_colored("Thank you for using the tool. Goodbye!", Fore.CYAN)
+# العودة إلى القائمة الرئيسية أو إيقاف الأداة
+def return_to_menu():
+    print_colored("\n Do you want to :", Fore.CYAN)
+    print("1. Return to the checklist")
+    print("2. Terminate the program")
+    
+    while True:
+        choice = input(Fore.YELLOW + "Choose an option: " + Style.RESET_ALL)
+        if choice == "1":
+            main_menu()
+            break
+        elif choice == "2":
+            print_colored("Thank you for using the tool ❤️", Fore.CYAN)
             exit()
         else:
-            print_colored("Invalid choice! Exiting.", Fore.RED)
-            exit()
+            print_colored("Incorrect choice 🚫 Please choose a valid option.", Fore.RED)
 
 
 if __name__ == "__main__":
