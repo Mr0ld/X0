@@ -118,6 +118,7 @@ def enter_num():
         elif choice == '4':
             path_discovery()
         elif choice == '5':
+            print_colored("Goodby",Fore.MAGENTA)
             sys.exit()
             break  # Exit the loop after valid input
         else:
@@ -129,7 +130,7 @@ def show_logo():
     # Clear screen
     os.system('cls' if os.name == 'nt' else 'clear')  
     
-    logo_text = "X0-ANS"
+    logo_text = "X0-OLD"
     subtitle = "Anonymous Arabs Organization"
     urlans = "Telegram : "
     urlas = "https://t.me/Anonymusarabs"
@@ -974,7 +975,7 @@ def get_tool_path(tool_name):
         return f"/data/data/com.termux/files/home/bin/{tool_name}"
 
 def check_url_validity():
-    target_url = input(Fore.YELLOW + "Enter target URL to check fields (include 'http:// or https://'): ")
+    target_url = input(Fore.YELLOW + "Enter target URL (include 'http:// or https://'): \n" + Style.RESET_ALL).strip()
     try:
         response = requests.get(target_url)
         if response.status_code == 200:
@@ -986,6 +987,12 @@ def check_url_validity():
     except requests.exceptions.RequestException:
         print_colored("Invalid URL. Please try again.", Fore.RED)
         return check_url_validity()
+
+def start_vulnerability_scan(target_url, wordlist_path):
+    dirb_path = get_tool_path("dirb")
+    print_colored("Starting Dirb scan...", Fore.GREEN)
+    os.system(f"dirb {target_url} {wordlist_path}")
+    return_to_menu()
 
 def extract_login_fields(url):
     try:
@@ -1001,7 +1008,7 @@ def extract_login_fields(url):
                     password_field = field.get('name')
                 elif 'user' in field.get('name', '').lower() or 'email' in field.get('name', '').lower():
                     username_field = field.get('name')
-        
+
         return username_field, password_field
     except Exception as e:
         print_colored(f"Error fetching login fields: {e}", Fore.RED)
@@ -1011,47 +1018,37 @@ def confirm_fields(username_field, password_field):
     print_colored(f"Detected username field: {username_field}", Fore.CYAN)
     print_colored(f"Detected password field: {password_field}", Fore.CYAN)
     
-    choice = input(Fore.YELLOW + "Do you want to use these fields? (Yes/No): ").strip().lower()
+    choice = input(Fore.YELLOW + "Do you want to use these fields? (Yes/No): \n" + Style.RESET_ALL).strip().lower()
     if choice in ['yes', 'y']:
         return username_field, password_field
     else:
-        username_field = input(Fore.YELLOW + "Enter the username field manually: ")
-        password_field = input(Fore.YELLOW + "Enter the password field manually: ")
+        username_field = input(Fore.YELLOW + "Enter the username field manually: \n" + Style.RESET_ALL)
+        password_field = input(Fore.YELLOW + "Enter the password field manually: \n" + Style.RESET_ALL)
         return username_field, password_field
-
-def start_vulnerability_scan(target_url, wordlist_path):
-    dirb_path = get_tool_path("dirb")
-    print_colored("Starting Dirb scan...", Fore.GREEN)
-    os.system(f"dirb {target_url} {wordlist_path}")
-    return_to_menu()
 
 def path_discovery():
     print_colored("\nPath Discovery Options", Fore.CYAN)
-    print_colored("1. Hidden Path Discovery", Fore.GREEN)
-    print_colored("2. Admin Page Brute Force", Fore.GREEN)
-    print_colored("3. Back to Main Menu", Fore.GREEN)
+    print_colored("1. Hidden Path Discovery", Fore.MAGENTA)
+    print_colored("2. Admin Page Brute Force", Fore.MAGENTA)
+    print_colored("3. Back to Main Menu", Fore.RED)
 
     while True:
-        choice = input(Fore.YELLOW + "Choose an option: ")
-        if choice not in ['1', '2', '3']:
+        choice = input(Fore.YELLOW + "Choose an option: \n" + Style.RESET_ALL)
+        if choice == "3":
+            main_menu()
+            break
+            
+        if choice not in ['1', '2']:
             print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
             continue
         
         target_url = check_url_validity()
-            
+        
         if choice == '1':
-            wordlist_name = input(Fore.YELLOW + "Enter Wordlist filename (with extension): ")
+            wordlist_name = input(Fore.YELLOW + "Enter Wordlist filename (with extension): \n" + Style.RESET_ALL)
             start_vulnerability_scan(target_url, wordlist_name)
         
         elif choice == '2':
-            print_colored("1. Brute force both username and password", Fore.GREEN)
-            print_colored("2. Brute force password only", Fore.GREEN)
-            bf_choice = input(Fore.YELLOW + "Choose an option: ")
-            if bf_choice not in ['1', '2']:
-                print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
-                continue
-
-            target_url = check_url_validity()
             username_field, password_field = extract_login_fields(target_url)
             
             if not (username_field and password_field):
@@ -1059,43 +1056,45 @@ def path_discovery():
                 continue
             
             username_field, password_field = confirm_fields(username_field, password_field)
-            
+
+            bf_choice = input(Fore.YELLOW + "Choose Brute Force option:\n1. Both username and password\n2. Password only\n" + Style.RESET_ALL)
             if bf_choice == '1':
-                userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): ")
-                passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
-                target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): ")
+                userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): \n" + Style.RESET_ALL)
+                passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): \n" + Style.RESET_ALL)
+                target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): \n" + Style.RESET_ALL)
 
                 print_colored("Starting brute force attack...", Fore.GREEN)
                 os.system(f'hydra -I -L {userlist_name} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 0,5 -W 1')
 
             elif bf_choice == '2':
-                username = input(Fore.YELLOW + "Enter username: ")
-                passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): ")
-                target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): ")
+                username = input(Fore.YELLOW + "Enter username: \n" + Style.RESET_ALL)
+                passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): \n" + Style.RESET_ALL)
+                target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): \n" + Style.RESET_ALL)
 
                 print_colored("Starting brute force attack...", Fore.GREEN)
                 os.system(f'hydra -I -l {username} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 0,2 -W 1')
 
             return_to_menu()
 
-        elif choice == '3':
-            return
-
 def nmap_scan():
     print_colored("\nNmap Scan Options", Fore.CYAN)
-    print_colored("1. Deep Vulnerability Scan", Fore.GREEN)
-    print_colored("2. Medium Vulnerability Scan", Fore.GREEN)
-    print_colored("3. Custom Command", Fore.GREEN)
-    print_colored("4. Back to Main Menu", Fore.GREEN)
+    print_colored("1. Deep Vulnerability Scan", Fore.MAGENTA)
+    print_colored("2. Medium Vulnerability Scan", Fore.MAGENTA)
+    print_colored("3. Custom Command", Fore.MAGENTA)
+    print_colored("4. Back to Main Menu", Fore.RED)
 
     while True:
-        choice = input(Fore.YELLOW + "Choose an option: ")
-        if choice not in ['1', '2', '3', '4']:
+        choice = input(Fore.YELLOW + "Choose an option: \n" + Style.RESET_ALL)
+        if choice == "4":
+            main_menu()
+            break  # العودة للقائمة الرئيسية
+            
+        if choice not in ['1', '2', '3']:
             print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
             continue
 
-        target = check_url_validity()
-
+        target = input(Fore.YELLOW + "Enter target IP or URL without protocol: \n" + Style.RESET_ALL).strip()
+        
         if choice == '1':
             print_colored("Starting deep vulnerability scan...", Fore.GREEN)
             os.system(f"nmap --stats-every 15s -v -n -p- -sT -f -A --script vulners --script=vuln {target}")
@@ -1103,11 +1102,9 @@ def nmap_scan():
             print_colored("Starting medium vulnerability scan...", Fore.GREEN)
             os.system(f"nmap --stats-every 15s -T5 -sT -sV -f -A -Pn {target}")
         elif choice == '3':
-            command = input(Fore.YELLOW + "Enter Nmap command: ")
+            command = input(Fore.YELLOW + "Enter Nmap command: \n" + Style.RESET_ALL)
             print_colored("Starting custom Nmap scan...", Fore.GREEN)
             os.system(f"nmap {command} {target}")
-        elif choice == '4':
-            return
 
         return_to_menu()
 
@@ -1117,7 +1114,7 @@ def return_to_menu():
     print("2. Terminate the program")
     
     while True:
-        choice = input(Fore.YELLOW + "Choose an option: " + Style.RESET_ALL)
+        choice = input(Fore.YELLOW + "Choose an option: \n" + Style.RESET_ALL)
         if choice == "1":
             main_menu()
             break
@@ -1127,5 +1124,7 @@ def return_to_menu():
         else:
             print_colored("Incorrect choice 🚫 Please choose a valid option.", Fore.RED)
 
+
 if __name__ == "__main__":
     main_menu()
+
