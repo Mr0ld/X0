@@ -407,8 +407,8 @@ def vuln_menu():
 
 def post_scan_options():
     slow_print("\n Do you want to :", Fore.CYAN, delay=0.05)
-    print("1. Return to the checklist")
-    print("2. Terminate the program")
+    print_colored("1. Return to the checklist",Fore.MAGENTA)
+    print_colored("2. Terminate the program",Fore.MAGENTA)
     
     while True:
         choice = input(Fore.YELLOW + "Choose an option: ")
@@ -948,8 +948,8 @@ def analyze_js(url):
 # العودة إلى القائمة الرئيسية أو إيقاف الأداة
 def return_to_menu():
     print_colored("\n Do you want to :", Fore.CYAN)
-    print("1. Return to the checklist")
-    print("2. Terminate the program")
+    print_colored("1. Return to the checklist",Fore.MAGENTA)
+    print_colored("2. Terminate the program",Fore.MAGENTA)
     
     while True:
         choice = input(Fore.YELLOW + "Choose an option: " + Style.RESET_ALL)
@@ -974,12 +974,17 @@ def get_tool_path(tool_name):
     else:
         return f"/data/data/com.termux/files/home/bin/{tool_name}"
 
+def print_colored(text, color):
+    print(color + text + Style.RESET_ALL)
+
 def check_url_validity():
-    target_url = input(Fore.YELLOW + "Enter target URL (include 'http:// or https://'): \n" + Style.RESET_ALL).strip()
+    print(Fore.YELLOW + "Enter target URL (include 'http://' or 'https://'):")
+    target_url = input(Fore.CYAN).strip()
+    
     try:
         response = requests.get(target_url)
         if response.status_code == 200:
-            print_colored("URL is valid and reachable.", Fore.GREEN)
+            print_colored("URL is valid and reachable.", Fore.MAGENTA)
             return target_url
         else:
             print_colored("URL is not reachable. Please check and try again.", Fore.RED)
@@ -1064,7 +1069,7 @@ def path_discovery():
                 target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): \n" + Style.RESET_ALL)
 
                 print_colored("Starting brute force attack...", Fore.GREEN)
-                os.system(f'hydra -I -L {userlist_name} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 0,5 -W 1')
+                os.system(f'hydra -I -L {userlist_name} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 1 -W 1')
 
             elif bf_choice == '2':
                 username = input(Fore.YELLOW + "Enter username: \n" + Style.RESET_ALL)
@@ -1072,7 +1077,7 @@ def path_discovery():
                 target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): \n" + Style.RESET_ALL)
 
                 print_colored("Starting brute force attack...", Fore.GREEN)
-                os.system(f'hydra -I -l {username} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 0,2 -W 1')
+                os.system(f'hydra -I -l {username} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 1 -W 1')
 
             return_to_menu()
 
@@ -1110,8 +1115,8 @@ def nmap_scan():
 
 def return_to_menu():
     print_colored("\nDo you want to:", Fore.CYAN)
-    print("1. Return to the checklist")
-    print("2. Terminate the program")
+    print_colored("1. Return to the checklist",Fore.MAGENTA)
+    print_colored("2. Terminate the program",Fore.MAGENTA)
     
     while True:
         choice = input(Fore.YELLOW + "Choose an option: \n" + Style.RESET_ALL)
