@@ -7,6 +7,7 @@ import concurrent.futures
 from colorama import Fore, Style, init
 import re
 import os
+import io
 import difflib
 import time
 import pyfiglet
@@ -19,8 +20,19 @@ import json
 # Initialize colorama
 init(autoreset=True)
 
-# List of valid API keys
-VALID_API_KEYS = ["x0old", "x0m7s", "X0ANS", "anonymous arabs", "x0dark", "x0black widow", "x0round", "key3", "key2"]  # Add more keys as needed
+
+VALID_API_KEYS = [
+    "x0A1B2C3D4E", "x0F5G6H7I8J", "x0K9L0M1N2O", "x0P3Q4R5S6T", "x0U7V8W9X0Y",
+    "x0Z1A2B3C4D", "x0E5F6G7H8I", "x0J9K0L1M2N", "x0O3P4Q5R6S", "x0T7U8V9W0X",
+    "x0Y1Z2A3B4C", "x0D5E6F7G8H", "x0I9J0K1L2M", "x0N3O4P5Q6R", "x0S7T8U9V0W",
+    "x0X1Y2Z3A4B", "x0C5D6E7F8G", "x0H9I0J1K2L", "x0M3N4O5P6Q", "x0R7S8T9U0V",
+    "x0W1X2Y3Z4A", "x0B5C6D7E8F", "x0G9H0I1J2K", "x0L3M4N5O6P", "x0Q7R8S9T0U",
+    "x0V1W2X3Y4Z", "x0A5B6C7D8E", "x0F9G0H1I2J", "x0K3L4M5N6O", "x0P7Q8R9S0T",
+    "x0U1V2W3X4Y", "x0Z5A6B7C8D", "x0E9F0G1H2I", "x0J3K4L5M6N", "x0O7P8Q9R0S",
+    "x0T1U2V3W4X", "x0Y5Z6A7B8C", "x0D9E0F1G2H", "x0I3J4K5L6M", "x0N7O8P9Q0R",
+    "x0S1T2U3V4W", "x0X5Y6Z7A8B", "x0C9D0E1F2G", "x0H3I4J5K6L", "x0M7N8O9P0Q",
+    "x0R1S2T3U4V", "x0W5X6Y7Z8A", "x0B9C0D1E2F", "x0G3H4I5J6K", "x0L7M8N9O0P"
+]
 
 os.system('clear')
 
@@ -416,7 +428,7 @@ def post_scan_options():
             main_menu()
             break
         elif choice == '2':
-            print_colored("Thank you for using the tool ❤️", Fore.CYAN)
+            print_colored("Best regards MR 𝗢𝗹𝗱 ..", Fore.CYAN)
             exit()
         else:
             slow_print("Incorrect choice 🚫 Please choose a valid option.", Fore.RED, delay=0.01)
@@ -544,9 +556,9 @@ def generate_report(report):
         if save_choice in ['y', 'yes']:
             save_report_to_file(report_text)
         elif save_choice in ['n', 'no']:
-            print("Thank you ❤️")
+            print("Best regards MR 𝗢𝗹𝗱 ..")
         else:
-            print("🚫 Invalid selection. Thank you for using the tool ❤️")
+            print("🚫 Invalid selection. Best regards MR 𝗢𝗹𝗱 ..")
     else:
         print_colored("🔴 No vulnerabilities were found , No Exploit ❌.", Fore.RED)
 
@@ -663,6 +675,9 @@ def validate_protocol(protocol_choice):
 # قائمة جمع المعلومات
 def gather_info_menu():
     print_colored("\nCollect information about site", Fore.CYAN)
+    
+    
+    report_lines = []
 
     # التحقق من صحة الرابط المدخل
     while True:
@@ -719,173 +734,258 @@ def get_real_ip(domain):
         print_colored(f"Failed to resolve IP: {e}", Fore.GREEN)
         return None
 
-# جمع المعلومات عن الموقع
+# دالة لجمع المعلومات عن الموقع
 def gather_info(url):
-    print_colored(f"\nCollect information about this site: {url}", Fore.CYAN)
-    
-    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
+    report = []  # متغير لتخزين التقرير النهائي
 
-    # جمع عنوان IP
     domain = url.replace('http://', '').replace('https://', '')
     ip = socket.gethostbyname(domain)
-    print_colored(f"IP : ", Fore.MAGENTA)
-    print_colored(f" {ip}", Fore.GREEN)
     
-    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
+    report.append(f"Collect information about this site: {url}")
+    print_colored("========================================", Fore.RED)
+    
+    print_colored(f"\nCollect information about this site: ", Fore.MAGENTA)
+    print_colored(f"{url}", Fore.GREEN)
+    print_colored("========================================", Fore.RED)
+    report.append("========================================")
+    report.append(f"IP : {ip}")
+    report.append("========================================")
+    print_colored("IP :", Fore.MAGENTA)
+    print_colored(f"{ip}", Fore.GREEN)
+    print_colored("========================================", Fore.CYAN)
 
-    # فحص SSL
-    check_ssl(domain)
+    ssl_info = check_ssl(domain)
+    report.append(f"SSL Certificate Expiry: {ssl_info}")
+    report.append("========================================")
+    print_colored(f"SSL Certificate Expiry : ", Fore.MAGENTA)
+    print_colored(f" {ssl_info}", Fore.GREEN)
+    print_colored("========================================", Fore.CYAN)
 
-    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
+    wsheaders = requests.get(url).headers
+    ws = wsheaders.get('Server', 'Could Not Detect')
+    report.append(f"Web Server: {ws}")
+    report.append("========================================")
+    print_colored(f"Web Server : ", Fore.MAGENTA)
+    print_colored(f" {ws}", Fore.GREEN)
+    print_colored("========================================", Fore.CYAN)
 
-    # جلب معلومات السيرفر
-    try:
-        wsheaders = requests.get(url).headers
-        ws = wsheaders.get('Server', 'Could Not Detect')
-        print_colored(f"Web Server: {ws}", Fore.GREEN)
-    except requests.RequestException as e:
-        print_colored(f"Error accessing to {url} : {e}", Fore.RED)
+    tcms = detect_cms(requests.get(url).text, url)
+    report.append(f"CMS : {tcms}")
+    report.append("========================================")
+    print_colored("CMS :", Fore.MAGENTA)
+    print_colored(f"{tcms}", Fore.GREEN)
+    print_colored("========================================", Fore.CYAN)
 
-    print_colored("========================================", Fore.CYAN)  # فاصلة بين العمليات
+    cloudflare_status = check_cloudflare(domain)
+    report.append(f"Cloudflare: {cloudflare_status}")
+    report.append("========================================")
+    print_colored(f"Cloudflare : ", Fore.MAGENTA)
+    print_colored(f" {cloudflare_status}", Fore.GREEN)
+    print_colored("========================================", Fore.CYAN)
 
-    # كشف نوع الـ CMS
-    cmssc = requests.get(url).text
-    if '/wp-content/' in cmssc:
-        tcms = "WordPress"
-    elif 'Joomla' in cmssc:
-        tcms = "Joomla"
-    elif 'Drupal' in requests.get(f"{url}/misc/drupal.js").text:
-        tcms = "Drupal"
-    elif '/skin/frontend/' in cmssc:
-        tcms = "Magento"
+    robots_content = check_robots(url)
+    report.append(f"Robots File:\n{robots_content}")
+    report.append("========================================")
+    print_colored("Robots File:", Fore.GREEN)
+    print_colored(robots_content, Fore.LIGHTYELLOW_EX)
+    print_colored("========================================", Fore.CYAN)
+
+    whois_data = check_whois(domain)
+    report.append(f"WHOIS Lookup:\n{whois_data}")
+    report.append("========================================")
+    print_colored(f"WHOIS Lookup :", Fore.MAGENTA)
+    print_colored(f"{whois_data}", Fore.GREEN)
+    print_colored("========================================", Fore.CYAN)
+
+    geoip_data = check_geoip(domain)
+    report.append(f"GEO IP Lookup:\n{geoip_data}")
+    report.append("========================================")
+    print_colored(f"GEO IP Lookup :", Fore.MAGENTA)
+    print_colored(f"{geoip_data}", Fore.GREEN)
+    print_colored("========================================", Fore.CYAN)
+
+    dns_data = check_dns(domain)
+    report.append(f"DNS Lookup:\n{dns_data}")
+    report.append("========================================")
+    print_colored(f"DNS Lookup :", Fore.MAGENTA)
+    print_colored(f"{dns_data}", Fore.GREEN)
+    print_colored("========================================", Fore.CYAN)
+
+    subnet_data = check_subnet(domain)
+    report.append(f"Subnet Calculation:\n{subnet_data}")
+    report.append("========================================")
+    print_colored(f"Subnet Calculation :", Fore.MAGENTA)
+    print_colored(f"{subnet_data}", Fore.GREEN)
+    print_colored("========================================", Fore.CYAN)
+
+    js_files = analyze_js(url)
+    report.append(f"JavaScript files:\n{js_files}")
+    report.append("========================================")
+    print_colored(f"JavaScript files :", Fore.MAGENTA)
+    print_colored(f"{js_files}", Fore.GREEN)
+    print_colored("========================================", Fore.CYAN)
+
+    security_headers = check_security_headers(wsheaders)
+    report.append("Security Headers:\n" + security_headers)
+    report.append("========================================")
+    print_colored("Security Headers:\n" + security_headers, Fore.CYAN)
+    print_colored("========================================", Fore.CYAN)
+
+    emails_phones = extract_emails_and_phones(url)
+    report.append(emails_phones)
+    report.append("========================================")
+    print_colored(emails_phones, Fore.CYAN)
+    print_colored("========================================", Fore.CYAN)
+
+    port_scan_result = start_port_check(ip)
+    report.append(port_scan_result)
+    report.append("========================================")
+    print_colored(port_scan_result, Fore.GREEN)
+    print_colored("========================================", Fore.CYAN)
+
+    user_save_report("\n".join(report))  # استدعاء الدالة الجديدة لحفظ التقرير
+
+
+# دالة جديدة لسؤال المستخدم إذا كان يريد حفظ التقرير
+def user_save_report(report_text):
+    save_choice = input(Fore.YELLOW + "Do you want to save the report in a txt file? (Yes/y or No/n): " + Style.RESET_ALL).strip().lower()
+    if save_choice in ['yes', 'y']:
+        while True:
+            filename = input(Fore.YELLOW + "Enter the file name (must end with .txt): " + Style.RESET_ALL).strip()
+            if filename.endswith('.txt'):
+                with open(filename, "w") as file:
+                    file.write(report_text)
+                print_colored(f"Report saved successfully as {filename}", Fore.GREEN)
+                print_colored(f"File path: {os.path.abspath(filename)}", Fore.GREEN)
+                after_save_option()  # استدعاء الدالة بعد حفظ التقرير
+                break
+            else:
+                print_colored("Invalid file name. Please enter a name ending with .txt", Fore.RED)
+    elif save_choice in ['no', 'n']:
+        after_save_option()
     else:
-        tcms = "Could Not Detect"
-    print_colored(f"CMS : ", Fore.GREEN)
-    print_colored(f" {tcms} ", Fore.RED)
+        print_colored("Invalid choice. Please enter Yes/y or No/n.", Fore.RED)
+        user_save_report(report_text)
 
-    print_colored("========================================", Fore.CYAN)
-    check_cloudflare(domain)
-    print_colored("========================================", Fore.CYAN)
-    check_robots(url)
-    print_colored("========================================", Fore.CYAN)
-    check_whois(domain)
-    print_colored("========================================", Fore.CYAN)
-    check_geoip(domain)
-    print_colored("========================================", Fore.CYAN)
-    check_dns(domain)
-    print_colored("========================================", Fore.CYAN)
-    check_subnet(domain)
-    print_colored("========================================", Fore.CYAN)
-    analyze_js(url)
-    print_colored("========================================", Fore.CYAN)
-    check_security_headers(wsheaders)
-    print_colored("========================================", Fore.CYAN)
-    extract_emails_and_phones(url)
-    print_colored("========================================", Fore.CYAN)
 
-    start_port_check(ip)
+# دالة لسؤال المستخدم بعد حفظ التقرير
+def after_save_option():
+    print_colored("\nDo you want to:", Fore.CYAN)
+    print_colored("1. Return to the main menu", Fore.MAGENTA)
+    print_colored("2. Terminate the program", Fore.MAGENTA)
     
-    save_report()
+    while True:
+        choice = input(Fore.YELLOW + "Choose an option: " + Style.RESET_ALL).strip()
+        if choice == "1":
+            main_menu()  # استدعاء القائمة الرئيسية مباشرة
+            break
+        elif choice == "2":
+            print_colored("Best regards MR 𝗢𝗹𝗱 ..", Fore.CYAN)
+            exit()
+        else:
+            print_colored("Incorrect choice 🚫 Please choose a valid option.", Fore.RED)
 
-# فحص SSL
+
+
+# دالة للسؤال بعد عدم حفظ التقرير
+def after_save_option():
+    print_colored("\nDo you want to:", Fore.CYAN)
+    print_colored("1. Return to the main menu", Fore.MAGENTA)
+    print_colored("2. Terminate the program", Fore.MAGENTA)
+    
+    while True:
+        choice = input(Fore.YELLOW + "Choose an option: " + Style.RESET_ALL).strip()
+        if choice == "1":
+            confirm_return_to_main_menu()
+            break
+        elif choice == "2":
+            print_colored("Best regards MR 𝗢𝗹𝗱 ..", Fore.CYAN)
+            exit()
+        else:
+            print_colored("Incorrect choice 🚫 Please choose a valid option.", Fore.RED)
+
+
+# تأكيد العودة إلى القائمة الرئيسية
+def confirm_return_to_main_menu():
+    confirmation = input(Fore.RED + "Returning to the main menu will delete the site report. Confirm by typing Yes/y or No/n: " + Style.RESET_ALL).strip().lower()
+    if confirmation in ['yes', 'y']:
+        main_menu()
+    elif confirmation in ['no', 'n']:
+        after_save_option()
+    else:
+        print_colored("Invalid choice. Please enter Yes/y or No/n.", Fore.RED)
+        confirm_return_to_main_menu()
+    
+
+
+
+def detect_cms(content, url):
+    if '/wp-content/' in content:
+        return "WordPress"
+    elif 'Joomla' in content:
+        return "Joomla"
+    elif 'Drupal' in requests.get(f"{url}/misc/drupal.js").text:
+        return "Drupal"
+    elif '/skin/frontend/' in content:
+        return "Magento"
+    else:
+        return "Could Not Detect"
+
 def check_ssl(domain):
     try:
         context = ssl.create_default_context()
         with context.wrap_socket(socket.socket(), server_hostname=domain) as s:
             s.connect((domain, 443))
             cert = s.getpeercert()
-            print_colored(f"SSL Certificate Expiry: {cert['notAfter']}", Fore.GREEN)
+            return cert['notAfter']
     except Exception as e:
-        print_colored(f"SSL Certificate check failed: {e}", Fore.RED)
+        return f"SSL Certificate check failed: {e}"
 
-# فحص حماية Cloudflare
 def check_cloudflare(domain):
     try:
         urlhh = f"http://api.hackertarget.com/httpheaders/?q={domain}"
         resulthh = requests.get(urlhh).text
-        cloudflare_status = "Detected" if 'cloudflare' in resulthh else "Not Detected"
-        print_colored(f"Cloudflare: {cloudflare_status}", Fore.GREEN)
+        return "Detected" if 'cloudflare' in resulthh else "Not Detected"
     except Exception as e:
-        print_colored(f"خطأ أثناء فحص Cloudflare: {e}", Fore.RED)
+        return f"Error during Cloudflare check: {e}"
 
-# فحص robots.txt
 def check_robots(url):
-    rbturl = f"{url}/robots.txt"
     try:
-        rbtresponse = requests.get(rbturl).text
-        if rbtresponse:
-            print_colored(f"Robots File Found :", Fore.GREEN)
-            print_colored(f"{rbtresponse}", Fore.LIGHTYELLOW_EX)
-        else:
-            print_colored("Robots File Found But Empty!", Fore.YELLOW)
+        rbtresponse = requests.get(f"{url}/robots.txt").text
+        return rbtresponse if rbtresponse else "Robots File Found But Empty!"
     except:
-        print_colored("Could NOT Find robots.txt!", Fore.RED)
+        return "Could NOT Find robots.txt!"
 
-# معلومات WHOIS
 def check_whois(domain):
-    urlwhois = f"http://api.hackertarget.com/whois/?q={domain}"
-    resultwhois = requests.get(urlwhois).text
-    print_colored(f"WHOIS Lookup:\n{resultwhois}", Fore.GREEN)
-
-# معلومات GEO IP
-def check_geoip(domain):
-    urlgip = f"http://api.hackertarget.com/geoip/?q={domain}"
-    resultgip = requests.get(urlgip).text
-    print_colored(f"GEO IP Lookup:\n{resultgip}", Fore.GREEN)
-
-# فحص DNS
-def check_dns(domain):
-    urldlup = f"http://api.hackertarget.com/dnslookup/?q={domain}"
-    resultdlup = requests.get(urldlup).text
-    print_colored(f"DNS Lookup:\n{resultdlup}", Fore.GREEN)
-
-# حساب Subnet
-def check_subnet(domain):
-    urlscal = f"http://api.hackertarget.com/subnetcalc/?q={domain}"
-    resultscal = requests.get(urlscal).text
-    print_colored(f"Subnet Calculation:\n{resultscal}", Fore.GREEN)
-
-# دالة فحص المنافذ باستخدام Nmap
-def start_port_check(ip):
-    choice = input(Fore.MAGENTA + "Do you want to perform a port scan? (Yes/y or No/n): " + Style.RESET_ALL).strip().lower()
-    if choice in ['yes', 'y']:
-        scan_open_ports(ip)
-    elif choice in ['no', 'n']:
-        print_colored("⚠️ Port scan was not performed on the website.", Fore.RED)
-    else:
-        print_colored("🔴 Invalid choice. Please enter Yes/y or No/n.", Fore.RED)
-
-# فحص المنافذ المفتوحة
-def scan_open_ports(ip):
-    while True:
-        choice = input(Fore.MAGENTA + "Do you want to specify the number of ports to scan? (Yes/y or No/n) : " + Style.RESET_ALL).strip().lower()
-        if choice in ['yes', 'y']:
-            try:
-                max_ports = int(input(Fore.YELLOW + "Enter the number of ports to scan (e.g., 300): " + Style.RESET_ALL))
-                port_range = f'1-{max_ports}'
-                break
-            except ValueError:
-                print_colored("Please enter a valid number.", Fore.RED)
-        elif choice in ['no', 'n']:
-            port_range = '1-65535'
-            break
-        else:
-            print_colored("Wrong choice 🚫 Please choose a valid option.", Fore.RED)
-
-    print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.CYAN)
-    command = f"nmap -T5 -sV -p {port_range} {ip}"
-    
     try:
-        result = subprocess.check_output(command, shell=True, text=True)
-        print_colored(result, Fore.CYAN)
-    except subprocess.CalledProcessError as e:
-        print_colored(f"Error with port scanning: {e}", Fore.RED)
+        return requests.get(f"http://api.hackertarget.com/whois/?q={domain}").text
+    except Exception as e:
+        return f"Error during WHOIS lookup: {e}"
 
-# دالة لفحص الرؤوس الأمنية الأساسية
+def check_geoip(domain):
+    try:
+        return requests.get(f"http://api.hackertarget.com/geoip/?q={domain}").text
+    except Exception as e:
+        return f"Error during GEO IP lookup: {e}"
+
+def check_dns(domain):
+    try:
+        return requests.get(f"http://api.hackertarget.com/dnslookup/?q={domain}").text
+    except Exception as e:
+        return f"Error during DNS lookup: {e}"
+
+def check_subnet(domain):
+    try:
+        return requests.get(f"http://api.hackertarget.com/subnetcalc/?q={domain}").text
+    except Exception as e:
+        return f"Error during Subnet calculation: {e}"
+
+def analyze_js(url):
+    soup = BeautifulSoup(requests.get(url).text, 'html.parser')
+    js_files = [script.get('src') for script in soup.find_all('script') if script.get('src')]
+    return "\n".join(js_files)
+
 def check_security_headers(headers):
-    print_colored("Checking security headers...", Fore.CYAN)
-
-    # قائمة برؤوس الأمان الشائعة
     security_headers = {
         "Content-Security-Policy": "Content Security Policy",
         "Strict-Transport-Security": "Strict Transport Security",
@@ -893,104 +993,83 @@ def check_security_headers(headers):
         "X-Frame-Options": "X Frame Options",
         "X-XSS-Protection": "X XSS Protection"
     }
-
-    # فحص كل رأس من رؤوس الأمان
+    result = []
     for header, description in security_headers.items():
         if header in headers:
-            print_colored(f"{description} is present: {headers[header]}", Fore.GREEN)
+            result.append(f"{description} is present: {headers[header]}")
         else:
-            print_colored(f"{description} is missing!", Fore.RED)
+            result.append(f"{description} is missing!")
+    return "\n".join(result)
+    
+    
 
-
-
-# دالة لاستخراج عناوين البريد الإلكتروني وأرقام الهواتف
 def extract_emails_and_phones(url):
     try:
-        response = requests.get(url)
-        content = response.text
+        content = requests.get(url).text
 
-        # البحث عن عناوين البريد الإلكتروني باستخدام تعبيرات نمطية متقدمة
-        emails = re.findall(r"[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|hotmail\.com|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})", content)
+        # استخراج جميع النصوص التي تحتوي على الرمز @
+        emails = re.findall(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", content)
+
+        # قائمة برموز الاتصال الدولية
+        country_codes = [
+            "+93", "+355", "+213", "+376", "+244", "+54", "+374", "+61", "+43", "+994",
+            "+973", "+880", "+375", "+32", "+501", "+229", "+975", "+591", "+387", "+267",
+            "+55", "+359", "+226", "+257", "+855", "+237", "+1", "+238", "+236", "+235",
+            "+56", "+86", "+57", "+269", "+242", "+243", "+506", "+385", "+53", "+357",
+            "+420", "+45", "+253", "+670", "+593", "+20", "+503", "+240", "+291", "+372",
+            "+251", "+679", "+358", "+33", "+241", "+220", "+995", "+49", "+233", "+30",
+            "+502", "+224", "+245", "+592", "+509", "+504", "+36", "+354", "+91", "+62",
+            "+98", "+964", "+353", "+972", "+39", "+225", "+81", "+962", "+7", "+254",
+            "+686", "+965", "+996", "+856", "+371", "+961", "+266", "+231", "+218", "+423",
+            "+370", "+352", "+389", "+261", "+265", "+60", "+960", "+223", "+356", "+692",
+            "+222", "+230", "+52", "+691", "+373", "+377", "+976", "+382", "+212", "+258",
+            "+264", "+674", "+977", "+31", "+64", "+505", "+227", "+234", "+47", "+968",
+            "+92", "+680", "+507", "+675", "+595", "+51", "+63", "+48", "+351", "+974",
+            "+40", "+250", "+262", "+966", "+221", "+381", "+248", "+232", "+65", "+421",
+            "+386", "+677", "+252", "+27", "+82", "+211", "+34", "+94", "+249", "+597",
+            "+268", "+46", "+41", "+963", "+886", "+992", "+255", "+66", "+228", "+676",
+            "+216", "+90", "+993", "+688", "+256", "+380", "+971", "+44", "+598", "+998",
+            "+678", "+379", "+58", "+84", "+967", "+260", "+263"
+        ]
+
+        # استخراج جميع أرقام الهواتف المحتملة
+        phones = re.findall(r"\+?\d{1,3}[-.\s]?\(?\d{2,4}?\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}", content)
+
+        # التحقق من أن الأرقام تبدأ بأحد رموز الاتصال الدولية
+        valid_phones = [phone for phone in phones if any(phone.startswith(code) for code in country_codes)]
+
+        # تجهيز النتائج
+        results = "Email Addresses Found:\n" + "\n".join(emails) if emails else "No Email Addresses Found"
+        results += "\nPhone Numbers Found:\n" + "\n".join(valid_phones) if valid_phones else "\nNo Phone Numbers Found"
         
-        # البحث عن أرقام الهواتف بتنسيق دولي أو محلي (تأكد من وجود 8 إلى 15 رقمًا فقط)
-        phones = re.findall(r"\+?\d{1,3}[-.\s]?\(?\d{2,4}?\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}[-.\s]?\d{0,4}", content)
-        
-        # تصفية الأرقام بحيث تكون ضمن نطاق معين للطول للتحقق من صحتها
-        valid_phones = [phone for phone in phones if 8 <= len(re.sub(r'\D', '', phone)) <= 15]
-
-        # طباعة عناوين البريد الإلكتروني إن وجدت
-        if emails:
-            print_colored("Email Addresses Found:", Fore.GREEN)
-            for email in emails:
-                print_colored(email, Fore.LIGHTCYAN_EX)
-        else:
-            print_colored("No Email Addresses Found", Fore.RED)
-
-        # طباعة أرقام الهواتف إن وجدت
-        if valid_phones:
-            print_colored("Phone Numbers Found:", Fore.GREEN)
-            for phone in valid_phones:
-                print_colored(phone, Fore.LIGHTCYAN_EX)
-        else:
-            print_colored("No Phone Numbers Found", Fore.RED)
-
+        return results
     except Exception as e:
-        print_colored(f"Error extracting emails and phones: {e}", Fore.RED)
-
+        return f"Error extracting emails and phones: {e}"
+        
+        
         
 
-# تحليل ملفات JavaScript
-def analyze_js(url):
-    soup = BeautifulSoup(requests.get(url).text, 'html.parser')
-    js_files = [script.get('src') for script in soup.find_all('script') if script.get('src')]
-    print_colored(f"JavaScript files : {js_files}", Fore.MAGENTA)
-
-# دالة حفظ التقرير النهائي بعد الفحص
-def save_report():
-    choice = input(Fore.MAGENTA + "Do you want to save the report in a TXT file? (Yes/y or No/n): " + Style.RESET_ALL).strip().lower()
+def start_port_check(ip):
+    choice = input(Fore.MAGENTA + "Do you want to perform a port scan? (Yes/y or No/n): " + Style.RESET_ALL).strip().lower()
     if choice in ['yes', 'y']:
-        while True:
-            filename = input(Fore.YELLOW + "Enter the file name with .txt extension: " + Style.RESET_ALL).strip()
-            if filename.endswith(".txt"):
-                try:
-                    # كتابة التقرير إلى الملف
-                    with open(filename, 'w') as report_file:
-                        report_file.write(f"Report for {url}\n\n")
-                        report_file.write(f"Real IP(s): {', '.join(real_ips)}\n")
-                        report_file.write(f"Web Server: {ws}\n")
-                        report_file.write(f"CMS: {tcms}\n")
-                        report_file.write(f"SSL Certificate Expiry: {cert['notAfter']}\n")
-                        report_file.write(f"Cloudflare: {cloudflare_status}\n")
-                        report_file.write("Other information collected...\n")
-                        # أكمل كتابة أي بيانات أخرى من جمع المعلومات كما هي مطبوعة في الكود الأصلي
-
-                    print_colored(f"Report saved successfully at: {filename}", Fore.GREEN)
-                    break
-                except Exception as e:
-                    print_colored(f"Error saving report: {e}", Fore.RED)
-                    break
-            else:
-                print_colored("Filename must end with .txt extension!", Fore.RED)
+        return scan_open_ports(ip)
     elif choice in ['no', 'n']:
-        # خيارات للمستخدم للعودة إلى القائمة أو إنهاء الأداة
-        print_colored("Do you want to:", Fore.CYAN)
-        print_colored("1. Return to the main menu", Fore.MAGENTA)
-        print_colored("2. Terminate the tool", Fore.MAGENTA)
-        
-        while True:
-            choice = input(Fore.YELLOW + "Choose an option: " + Style.RESET_ALL).strip()
-            if choice == "1":
-                confirm_choice = input(Fore.MAGENTA + "⚠️ Returning to the main menu will delete the current report. Confirm return? (Yes/y or No/n): " + Style.RESET_ALL).strip().lower()
-                if confirm_choice in ['yes', 'y']:
-                    main_menu()
-                    break
-                else:
-                    print_colored("Return cancelled. Please choose again.", Fore.RED)
-            elif choice == "2":
-                print_colored("Thank you for using the tool ❤️", Fore.CYAN)
-                exit()
-            else:
-                print_colored("Incorrect choice 🚫 Please choose a valid option.", Fore.RED)
+        return "Port scan was not performed."
+    else:
+        return "Invalid choice. Please enter Yes/y or No/n."
+
+def scan_open_ports(ip):
+    try:
+        scan_result = subprocess.run(["nmap", "-p-", "--open", "-Pn", ip], capture_output=True, text=True)
+        return scan_result.stdout
+    except Exception as e:
+        return f"Error during port scan: {e}"
+
+def save_report(url, report_text):
+    filename = f"{url.replace('https://', '').replace('http://', '')}_Report.txt"
+    with open(filename, "w") as file:
+        file.write(report_text)
+    print_colored(f"Report saved to {filename}", Fore.GREEN)
             
             
 
@@ -1154,7 +1233,7 @@ def return_to_menu():
             main_menu()
             break
         elif choice == "2":
-            print_colored("Thank you for using the tool ❤️", Fore.CYAN)
+            print_colored("Best regards MR 𝗢𝗹𝗱 ..", Fore.CYAN)
             exit()
         else:
             print_colored("Incorrect choice 🚫 Please choose a valid option.", Fore.RED)
@@ -1162,4 +1241,3 @@ def return_to_menu():
 
 if __name__ == "__main__":
     main_menu()
-
