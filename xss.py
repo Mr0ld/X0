@@ -1052,18 +1052,37 @@ def extract_emails_and_phones(url):
 def start_port_check(ip):
     choice = input(Fore.MAGENTA + "Do you want to perform a port scan? (Yes/y or No/n): " + Style.RESET_ALL).strip().lower()
     if choice in ['yes', 'y']:
-        return scan_open_ports(ip)
+        scan_open_ports(ip)
     elif choice in ['no', 'n']:
-        return "Port scan was not performed."
+        print_colored("⚠️ Port scan was not performed on the website.", Fore.RED)
     else:
-        return "Invalid choice. Please enter Yes/y or No/n."
+        print_colored("🔴 Invalid choice. Please enter Yes/y or No/n.", Fore.RED)
 
+# فحص المنافذ المفتوحة
 def scan_open_ports(ip):
+    while True:
+        choice = input(Fore.MAGENTA + "Do you want to specify the number of ports to scan? (Yes/y or No/n) : " + Style.RESET_ALL).strip().lower()
+        if choice in ['yes', 'y']:
+            try:
+                max_ports = int(input(Fore.YELLOW + "Enter the number of ports to scan (e.g., 300): " + Style.RESET_ALL))
+                port_range = f'1-{max_ports}'
+                break
+            except ValueError:
+                print_colored("Please enter a valid number.", Fore.RED)
+        elif choice in ['no', 'n']:
+            port_range = '1-65535'
+            break
+        else:
+            print_colored("Wrong choice 🚫 Please choose a valid option.", Fore.RED)
+
+    print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.CYAN)
+    command = f"nmap -p {port_range} {ip}"
+    
     try:
-        scan_result = subprocess.run(["nmap", "-p-", "--open", "-Pn", ip], capture_output=True, text=True)
-        return scan_result.stdout
-    except Exception as e:
-        return f"Error during port scan: {e}"
+        result = subprocess.check_output(command, shell=True, text=True)
+        print_colored(result, Fore.CYAN)
+    except subprocess.CalledProcessError as e:
+        print_colored(f"Error with port scanning: {e}", Fore.RED)
 
 def save_report(url, report_text):
     filename = f"{url.replace('https://', '').replace('http://', '')}_Report.txt"
@@ -1171,24 +1190,32 @@ def path_discovery():
             
             username_field, password_field = confirm_fields(username_field, password_field)
 
-            bf_choice = input(Fore.YELLOW + "Choose Brute Force option:\n1. Both username and password\n2. Password only\n" + Style.RESET_ALL)
-            if bf_choice == '1':
-                userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): \n" + Style.RESET_ALL)
-                passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): \n" + Style.RESET_ALL)
-                target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): \n" + Style.RESET_ALL)
+bf_choice = input(Fore.YELLOW + "Choose Brute Force option:\n1. Both username and password\n2. Password only\n" + Style.RESET_ALL)
+if bf_choice == '1':
+    userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): \n" + Style.RESET_ALL)
+    passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): \n" + Style.RESET_ALL)
+    target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): \n" + Style.RESET_ALL)
 
-                print_colored("Starting brute force attack...", Fore.GREEN)
-                os.system(f'hydra -I -L {userlist_name} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 1 -W 1')
+    print_colored("Starting brute force attack...", Fore.GREEN)
+    hydra_command = f'hydra -L {userlist_name} -P {passlist_name} https-post-form "{target_url_no_protocol}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password" -t 64 -w 1 -V'
+    
+    # عرض الكود باللون السماوي قبل تنفيذه
+    print(Fore.CYAN + hydra_command + Style.RESET_ALL)
+    os.system(hydra_command)
 
-            elif bf_choice == '2':
-                username = input(Fore.YELLOW + "Enter username: \n" + Style.RESET_ALL)
-                passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): \n" + Style.RESET_ALL)
-                target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): \n" + Style.RESET_ALL)
+elif bf_choice == '2':
+    username = input(Fore.YELLOW + "Enter username: \n" + Style.RESET_ALL)
+    passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): \n" + Style.RESET_ALL)
+    target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): \n" + Style.RESET_ALL)
 
-                print_colored("Starting brute force attack...", Fore.GREEN)
-                os.system(f'hydra -l -L {username} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 1 -W 1')
+    print_colored("Starting brute force attack...", Fore.GREEN)
+    hydra_command = f'hydra -l {username} -P {passlist_name} https-post-form "{target_url_no_protocol}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password" -t 64 -w 1 -V'
 
-            return_to_menu()
+    # عرض الكود باللون السماوي قبل تنفيذه
+    print(Fore.CYAN + hydra_command + Style.RESET_ALL)
+    os.system(hydra_command)
+
+return_to_menu()
 
 def nmap_scan():
     print_colored("\nNmap Scan Options", Fore.CYAN)
