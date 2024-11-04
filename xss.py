@@ -1196,7 +1196,7 @@ def path_discovery():
                 passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): \n" + Style.RESET_ALL)
                 target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): \n" + Style.RESET_ALL)
 
-                hydra_command = f'hydra -L {userlist_name} -P {passlist_name} https-post-form {target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 64 -w 1 -V'
+                hydra_command = (f'hydra -I -L {userlist_name} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 64 -W 1')
                 
                 # عرض الكود باللون السماوي قبل تنفيذه
                 print(Fore.CYAN + hydra_command + Style.RESET_ALL)
@@ -1207,7 +1207,7 @@ def path_discovery():
                 passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): \n" + Style.RESET_ALL)
                 target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): \n" + Style.RESET_ALL)
 
-                hydra_command = f'hydra -l {username} -P {passlist_name} https-post-form {target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 64 -w 1 -V'
+                hydra_command = (f'hydra -l -L {username} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 64 -W 1')
 
                 # عرض الكود باللون السماوي قبل تنفيذه
                 print(Fore.CYAN + hydra_command + Style.RESET_ALL)
