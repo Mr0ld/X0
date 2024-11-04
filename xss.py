@@ -785,7 +785,7 @@ def gather_info(url):
 
     start_port_check(ip)
     
-    return_to_menu()
+    save_report()
 
 # فحص SSL
 def check_ssl(domain):
@@ -873,7 +873,7 @@ def scan_open_ports(ip):
             print_colored("Wrong choice 🚫 Please choose a valid option.", Fore.RED)
 
     print_colored("The scan may take from 1 to 5 minutes. Please wait...", Fore.CYAN)
-    command = f"nmap -T5 -sT -p {port_range} --script-timeout 2s {ip}"
+    command = f"nmap -T5 -sV -p {port_range} {ip}"
     
     try:
         result = subprocess.check_output(command, shell=True, text=True)
@@ -945,22 +945,52 @@ def analyze_js(url):
     js_files = [script.get('src') for script in soup.find_all('script') if script.get('src')]
     print_colored(f"JavaScript files : {js_files}", Fore.MAGENTA)
 
-# العودة إلى القائمة الرئيسية أو إيقاف الأداة
-def return_to_menu():
-    print_colored("\n Do you want to :", Fore.CYAN)
-    print_colored("1. Return to the checklist",Fore.MAGENTA)
-    print_colored("2. Terminate the program",Fore.MAGENTA)
-    
-    while True:
-        choice = input(Fore.YELLOW + "Choose an option: " + Style.RESET_ALL)
-        if choice == "1":
-            main_menu()
-            break
-        elif choice == "2":
-            print_colored("Thank you for using the tool ❤️", Fore.CYAN)
-            exit()
-        else:
-            print_colored("Incorrect choice 🚫 Please choose a valid option.", Fore.RED)
+# دالة حفظ التقرير النهائي بعد الفحص
+def save_report():
+    choice = input(Fore.MAGENTA + "Do you want to save the report in a TXT file? (Yes/y or No/n): " + Style.RESET_ALL).strip().lower()
+    if choice in ['yes', 'y']:
+        while True:
+            filename = input(Fore.YELLOW + "Enter the file name with .txt extension: " + Style.RESET_ALL).strip()
+            if filename.endswith(".txt"):
+                try:
+                    # كتابة التقرير إلى الملف
+                    with open(filename, 'w') as report_file:
+                        report_file.write(f"Report for {url}\n\n")
+                        report_file.write(f"Real IP(s): {', '.join(real_ips)}\n")
+                        report_file.write(f"Web Server: {ws}\n")
+                        report_file.write(f"CMS: {tcms}\n")
+                        report_file.write(f"SSL Certificate Expiry: {cert['notAfter']}\n")
+                        report_file.write(f"Cloudflare: {cloudflare_status}\n")
+                        report_file.write("Other information collected...\n")
+                        # أكمل كتابة أي بيانات أخرى من جمع المعلومات كما هي مطبوعة في الكود الأصلي
+
+                    print_colored(f"Report saved successfully at: {filename}", Fore.GREEN)
+                    break
+                except Exception as e:
+                    print_colored(f"Error saving report: {e}", Fore.RED)
+                    break
+            else:
+                print_colored("Filename must end with .txt extension!", Fore.RED)
+    elif choice in ['no', 'n']:
+        # خيارات للمستخدم للعودة إلى القائمة أو إنهاء الأداة
+        print_colored("Do you want to:", Fore.CYAN)
+        print_colored("1. Return to the main menu", Fore.MAGENTA)
+        print_colored("2. Terminate the tool", Fore.MAGENTA)
+        
+        while True:
+            choice = input(Fore.YELLOW + "Choose an option: " + Style.RESET_ALL).strip()
+            if choice == "1":
+                confirm_choice = input(Fore.MAGENTA + "⚠️ Returning to the main menu will delete the current report. Confirm return? (Yes/y or No/n): " + Style.RESET_ALL).strip().lower()
+                if confirm_choice in ['yes', 'y']:
+                    main_menu()
+                    break
+                else:
+                    print_colored("Return cancelled. Please choose again.", Fore.RED)
+            elif choice == "2":
+                print_colored("Thank you for using the tool ❤️", Fore.CYAN)
+                exit()
+            else:
+                print_colored("Incorrect choice 🚫 Please choose a valid option.", Fore.RED)
             
             
 
@@ -1077,7 +1107,7 @@ def path_discovery():
                 target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): \n" + Style.RESET_ALL)
 
                 print_colored("Starting brute force attack...", Fore.GREEN)
-                os.system(f'hydra -I -l {username} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 1 -W 1')
+                os.system(f'hydra -l -L {username} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 1 -W 1')
 
             return_to_menu()
 
