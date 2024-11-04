@@ -1124,7 +1124,7 @@ def check_url_validity():
 def start_vulnerability_scan(target_url, wordlist_path):
     dirb_path = get_tool_path("dirb")
     print_colored("Starting Dirb scan...", Fore.GREEN)
-    os.system(f"dirb {target_url} {wordlist_path}")
+    os.system(f"dirb {target_url} {wordlist_path} -f")
     return_to_menu()
 
 def extract_login_fields(url):
