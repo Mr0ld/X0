@@ -428,7 +428,7 @@ def post_scan_options():
             main_menu()
             break
         elif choice == '2':
-            print_colored("Best regards MR 𝗢𝗹𝗱 ..", Fore.CYAN)
+            print_colored("Best regards MR 𝗢𝗹𝗱 ..", Fore.MAGENTA)
             exit()
         else:
             slow_print("Incorrect choice 🚫 Please choose a valid option.", Fore.RED, delay=0.01)
@@ -556,9 +556,9 @@ def generate_report(report):
         if save_choice in ['y', 'yes']:
             save_report_to_file(report_text)
         elif save_choice in ['n', 'no']:
-            print("Best regards MR 𝗢𝗹𝗱 ..")
+            print_colored("Best regards MR 𝗢𝗹𝗱 ..",Fore.MAGENTA)
         else:
-            print("🚫 Invalid selection. Best regards MR 𝗢𝗹𝗱 ..")
+            print_colored("🚫 Invalid selection. Best regards MR 𝗢𝗹𝗱 ..",Fore.RED)
     else:
         print_colored("🔴 No vulnerabilities were found , No Exploit ❌.", Fore.RED)
 
@@ -880,7 +880,7 @@ def after_save_option():
             main_menu()  # استدعاء القائمة الرئيسية مباشرة
             break
         elif choice == "2":
-            print_colored("Best regards MR 𝗢𝗹𝗱 ..", Fore.CYAN)
+            print_colored("Best regards MR 𝗢𝗹𝗱 ..", Fore.RED)
             exit()
         else:
             print_colored("Incorrect choice 🚫 Please choose a valid option.", Fore.RED)
@@ -899,7 +899,7 @@ def after_save_option():
             confirm_return_to_main_menu()
             break
         elif choice == "2":
-            print_colored("Best regards MR 𝗢𝗹𝗱 ..", Fore.CYAN)
+            print_colored("Best regards MR 𝗢𝗹𝗱 ..", Fore.RED)
             exit()
         else:
             print_colored("Incorrect choice 🚫 Please choose a valid option.", Fore.RED)
@@ -1186,18 +1186,26 @@ def path_discovery():
             
             if not (username_field and password_field):
                 print_colored("Could not detect username or password fields.", Fore.RED)
-                continue
+                username_field = input(Fore.YELLOW + "Enter the username field manually: \n" + Style.RESET_ALL)
+                password_field = input(Fore.YELLOW + "Enter the password field manually: \n" + Style.RESET_ALL)
             
             username_field, password_field = confirm_fields(username_field, password_field)
 
-            bf_choice = input(Fore.YELLOW + "Choose Brute Force option:\n1. Both username and password\n2. Password only\n" + Style.RESET_ALL)
+            bf_choice = input(Fore.YELLOW + "Choose Brute Force option:\n" + Fore.MAGENTA + "1. Both username and password\n2. Password only\n" + Style.RESET_ALL)
+
             if bf_choice == '1':
                 userlist_name = input(Fore.YELLOW + "Enter username wordlist filename (with extension): \n" + Style.RESET_ALL)
                 passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): \n" + Style.RESET_ALL)
                 target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): \n" + Style.RESET_ALL)
 
-                hydra_command = (f'hydra -I -L {userlist_name} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t 64 -W 2')
-                
+                skip_limit = input(Fore.YELLOW + "Do you want to skip the limit while guessing? (Yes/No): \n" + Style.RESET_ALL).strip().lower()
+                if skip_limit in ['no', 'n']:
+                    hydra_command = (f'hydra -I -L {userlist_name} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password"')
+                else:
+                    threads = input(Fore.YELLOW + "How many threads do you want to use? \n" + Style.RESET_ALL)
+                    wait_time = input(Fore.YELLOW + "What is the wait time between each guess? \n" + Style.RESET_ALL)
+                    hydra_command = (f'hydra -I -L {userlist_name} -P {passlist_name} https-post-form://{target_url_no_protocol}:"{username_field}=^USER^&{password_field}=^PASS^":"F=Invalid username or password" -t {threads} -W {wait_time}')
+
                 # عرض الكود باللون السماوي قبل تنفيذه
                 print(Fore.CYAN + hydra_command + Style.RESET_ALL)
                 os.system(hydra_command)
@@ -1207,14 +1215,20 @@ def path_discovery():
                 passlist_name = input(Fore.YELLOW + "Enter password wordlist filename (with extension): \n" + Style.RESET_ALL)
                 target_url_no_protocol = input(Fore.YELLOW + "Enter target URL without protocol (e.g., example.com/login): \n" + Style.RESET_ALL)
 
-                hydra_command = (f'hydra -l {username} -P {passlist_name} {target_url_no_protocol.split("/")[0]} https-post-form "/{"/".join(target_url_no_protocol.split("/")[1:])}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password" -t 64 -W 2')
-
+                skip_limit = input(Fore.YELLOW + "Do you want to skip the limit while guessing? (Yes/No): \n" + Style.RESET_ALL).strip().lower()
+                if skip_limit in ['no', 'n']:
+                    hydra_command = (f'hydra -l {username} -P {passlist_name} {target_url_no_protocol.split("/")[0]} https-post-form "/{"/".join(target_url_no_protocol.split("/")[1:])}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password"')
+                else:
+                    threads = input(Fore.YELLOW + "How many threads do you want to use? \n" + Style.RESET_ALL)
+                    wait_time = input(Fore.YELLOW + "What is the wait time between each guess? \n" + Style.RESET_ALL)
+                    hydra_command = (f'hydra -l {username} -P {passlist_name} {target_url_no_protocol.split("/")[0]} https-post-form "/{"/".join(target_url_no_protocol.split("/")[1:])}:{username_field}=^USER^&{password_field}=^PASS^:F=Invalid username or password" -t {threads} -W {wait_time}')
 
                 # عرض الكود باللون السماوي قبل تنفيذه
                 print(Fore.CYAN + hydra_command + Style.RESET_ALL)
                 os.system(hydra_command)
 
             return_to_menu()
+
 
 def nmap_scan():
     print_colored("\nNmap Scan Options", Fore.CYAN)
@@ -1259,7 +1273,7 @@ def return_to_menu():
             main_menu()
             break
         elif choice == "2":
-            print_colored("Best regards MR 𝗢𝗹𝗱 ..", Fore.CYAN)
+            print_colored("Best regards MR 𝗢𝗹𝗱 ..", Fore.RED)
             exit()
         else:
             print_colored("Incorrect choice 🚫 Please choose a valid option.", Fore.RED)
