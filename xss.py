@@ -1247,15 +1247,15 @@ def nmap_scan():
             print_colored("Invalid choice! Please enter a valid number.", Fore.RED)
             continue
 
-        target = input(Fore.YELLOW + "Enter target IP or URL without protocol: \n" + Style.RESET_ALL).strip()
-        
-        # التحقق مما إذا كان الإدخال رابط موقع واستخراج عنوان IP
-        try:
-            ip_address = socket.gethostbyname(target)
-            print_colored(f"Resolved IP address: {ip_address}", Fore.CYAN)
-        except socket.gaierror:
-            print_colored("Invalid URL or IP address. Please enter a valid target.", Fore.RED)
-            continue
+        # حلقة للتحقق من صحة رابط الموقع أو عنوان IP
+        while True:
+            target = input(Fore.YELLOW + "Enter target IP or URL without protocol: \n" + Style.RESET_ALL).strip()
+            try:
+                ip_address = socket.gethostbyname(target)
+                print_colored(f"Resolved IP address: {ip_address}", Fore.CYAN)
+                break  # الخروج من حلقة التحقق إذا تم إيجاد عنوان IP
+            except socket.gaierror:
+                print_colored("Invalid URL or IP address. Please enter a valid target.", Fore.RED)
 
         # سؤال المستخدم عن تحديد عدد البورتات
         port_range_choice = input(Fore.YELLOW + "Do you want to specify the port range to scan? (Yes/y or No/n): \n" + Style.RESET_ALL).strip().lower()
@@ -1264,18 +1264,45 @@ def nmap_scan():
         else:
             ports = "1-65535"  # افتراض فحص جميع المنافذ
 
+        # بدء الفحص
         if choice == '1':
             print_colored("Starting deep vulnerability scan...", Fore.GREEN)
-            os.system(f"nmap --stats-every 15s -T4 -sS -sV -f -A -Pn --open --script=vulners,vuln --min-hostgroup 64 --min-parallelism 32 -p {ports} {ip_address}")
+            os.system(f"nmap --stats-every 15s -T4 -sS -sV -f -A -Pn --open --script=vulners,vuln --min-hostgroup 64 --min-parallelism 32 -p {ports} {ip_address} > nmap_scan_report.txt")
         elif choice == '2':
             print_colored("Starting medium vulnerability scan...", Fore.GREEN)
-            os.system(f"nmap --stats-every 15s -T5 -sS -sV --open --min-hostgroup 32 --min-parallelism 16 -p {ports} {ip_address}")
+            os.system(f"nmap --stats-every 15s -T5 -sS -sV --open --min-hostgroup 32 --min-parallelism 16 -O -p {ports} {ip_address} > nmap_scan_report.txt")
         elif choice == '3':
             command = input(Fore.YELLOW + "Enter Nmap command: \n" + Style.RESET_ALL)
             print_colored("Starting custom Nmap scan...", Fore.GREEN)
-            os.system(f"nmap {command} -p {ports} {ip_address}")
+            os.system(f"nmap {command} -p {ports} {ip_address} > nmap_scan_report.txt")
 
-        return_to_menu()
+        # سؤال المستخدم إذا كان يريد حفظ التقرير
+        save_report = input(Fore.YELLOW + "Do you want to save the report in a txt file? (Yes/y or No/n): \n" + Style.RESET_ALL).strip().lower()
+        if save_report == 'yes' or save_report == 'y':
+            while True:
+                file_name = input(Fore.YELLOW + "Enter the file name (without .txt): \n" + Style.RESET_ALL).strip()
+                if file_name.endswith('.txt'):
+                    print_colored("File name should not include .txt. Please enter a valid name.", Fore.RED)
+                else:
+                    file_name += '.txt'
+                    break
+            
+            os.rename('nmap_scan_report.txt', file_name)
+            print_colored(f"Report saved successfully as: {os.path.abspath(file_name)}", Fore.GREEN)
+        else:
+            while True:
+                return_choice = input(Fore.YELLOW + "Do you want to: \n1. Return to the main menu\n2. Terminate the program\n" + Style.RESET_ALL).strip()
+                if return_choice == "1":
+                    print_colored("Warning: Returning to the main menu will delete all scan results.", Fore.RED)
+                    confirm_return = input(Fore.YELLOW + "Are you sure you want to return? (Yes/y or No/n): \n" + Style.RESET_ALL).strip().lower()
+                    if confirm_return == 'yes' or confirm_return == 'y':
+                        main_menu()
+                        break
+                elif return_choice == "2":
+                    print_colored("Best regards MR 𝗢𝗹𝗱 ..", Fore.RED)
+                    exit()
+                else:
+                    print_colored("Incorrect choice 🚫 Please choose a valid option.", Fore.RED)
 
 def return_to_menu():
     print_colored("\nDo you want to:", Fore.CYAN)
