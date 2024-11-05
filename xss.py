@@ -1249,23 +1249,31 @@ def nmap_scan():
 
         target = input(Fore.YELLOW + "Enter target IP or URL without protocol: \n" + Style.RESET_ALL).strip()
         
+        # التحقق مما إذا كان الإدخال رابط موقع واستخراج عنوان IP
+        try:
+            ip_address = socket.gethostbyname(target)
+            print_colored(f"Resolved IP address: {ip_address}", Fore.CYAN)
+        except socket.gaierror:
+            print_colored("Invalid URL or IP address. Please enter a valid target.", Fore.RED)
+            continue
+        
         if choice == '1':
             print_colored("Starting deep vulnerability scan...", Fore.GREEN)
-            os.system(f"nmap --stats-every 15s -v -n -p- -sT -f -A --script vulners --script=vuln {target}")
+            os.system(f"nmap --stats-every 15s -v -n -p- -sT -f -A --script vulners --script=vuln {ip_address}")
         elif choice == '2':
             print_colored("Starting medium vulnerability scan...", Fore.GREEN)
-            os.system(f"nmap --stats-every 15s -T5 -sT -sV -f -A -Pn {target}")
+            os.system(f"nmap --stats-every 15s -T5 -sS -sV -f -A -Pn {ip_address}")
         elif choice == '3':
             command = input(Fore.YELLOW + "Enter Nmap command: \n" + Style.RESET_ALL)
             print_colored("Starting custom Nmap scan...", Fore.GREEN)
-            os.system(f"nmap {command} {target}")
+            os.system(f"nmap {command} {ip_address}")
 
         return_to_menu()
 
 def return_to_menu():
     print_colored("\nDo you want to:", Fore.CYAN)
-    print_colored("1. Return to the checklist",Fore.MAGENTA)
-    print_colored("2. Terminate the program",Fore.MAGENTA)
+    print_colored("1. Return to the checklist", Fore.MAGENTA)
+    print_colored("2. Terminate the program", Fore.MAGENTA)
     
     while True:
         choice = input(Fore.YELLOW + "Choose an option: \n" + Style.RESET_ALL)
