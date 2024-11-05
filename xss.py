@@ -1260,21 +1260,21 @@ def nmap_scan():
         # سؤال المستخدم عن تحديد عدد البورتات
         port_range_choice = input(Fore.YELLOW + "Do you want to specify the port range to scan? (Yes/y or No/n): \n" + Style.RESET_ALL).strip().lower()
         if port_range_choice == 'yes' or port_range_choice == 'y':
-            ports = input(Fore.YELLOW + "Enter the port range (e.g., 1-300 or 400-700): \n" + Style.RESET_ALL).strip()
+            ports = input(Fore.YELLOW + "Enter the port range (e.g., 1-300): \n" + Style.RESET_ALL).strip()
         else:
             ports = "1-65535"  # افتراض فحص جميع المنافذ
 
         # بدء الفحص
         if choice == '1':
             print_colored("Starting deep vulnerability scan...", Fore.GREEN)
-            os.system(f"nmap --stats-every 15s -T4 -sS -sV -f -A -Pn --open --script=vulners,vuln --min-hostgroup 64 --min-parallelism 32 -p {ports} {ip_address} > nmap_scan_report.txt")
+            os.system(f"nmap --stats-every 15s -T4 -sS -sV -f -A -Pn --open --script=vulners,vuln --min-hostgroup 64 --min-parallelism 32 -p {ports} {ip_address}")
         elif choice == '2':
             print_colored("Starting medium vulnerability scan...", Fore.GREEN)
-            os.system(f"nmap --stats-every 15s -T5 -sS -sV --open --min-hostgroup 32 --min-parallelism 16 -O -p {ports} {ip_address} > nmap_scan_report.txt")
+            os.system(f"nmap --stats-every 15s -T5 -sS -sV --open --min-hostgroup 32 --min-parallelism 16 -O -p {ports} {ip_address}")
         elif choice == '3':
             command = input(Fore.YELLOW + "Enter Nmap command: \n" + Style.RESET_ALL)
             print_colored("Starting custom Nmap scan...", Fore.GREEN)
-            os.system(f"nmap {command} -p {ports} {ip_address} > nmap_scan_report.txt")
+            os.system(f"nmap {command} -p {ports} {ip_address}")
 
         # سؤال المستخدم إذا كان يريد حفظ التقرير
         save_report = input(Fore.YELLOW + "Do you want to save the report in a txt file? (Yes/y or No/n): \n" + Style.RESET_ALL).strip().lower()
@@ -1291,7 +1291,11 @@ def nmap_scan():
             print_colored(f"Report saved successfully as: {os.path.abspath(file_name)}", Fore.GREEN)
         else:
             while True:
-                return_choice = input(Fore.YELLOW + "Do you want to: \n1. Return to the main menu\n2. Terminate the program\n" + Style.RESET_ALL).strip()
+                return_choice = input(Fore.YELLOW + "Do you want to:\n" + 
+                      Fore.MAGENTA + "1. Return to the main menu\n" + 
+                      "2. Terminate the program\n" + 
+                      Style.RESET_ALL).strip()
+
                 if return_choice == "1":
                     print_colored("Warning: Returning to the main menu will delete all scan results.", Fore.RED)
                     confirm_return = input(Fore.YELLOW + "Are you sure you want to return? (Yes/y or No/n): \n" + Style.RESET_ALL).strip().lower()
@@ -1319,6 +1323,7 @@ def return_to_menu():
             exit()
         else:
             print_colored("Incorrect choice 🚫 Please choose a valid option.", Fore.RED)
+
 
 
 if __name__ == "__main__":
