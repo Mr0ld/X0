@@ -22,7 +22,7 @@ init(autoreset=True)
 
 
 VALID_API_KEYS = [
-    "x", "x0F5G6H7I8J", "x0K9L0M1N2O", "x0P3Q4R5S6T", "x0U7V8W9X0Y",
+    "@", "x0F5G6H7I8J", "x0K9L0M1N2O", "x0P3Q4R5S6T", "x0U7V8W9X0Y",
     "x0Z1A2B3C4D", "x0E5F6G7H8I", "x0J9K0L1M2N", "x0O3P4Q5R6S", "x0T7U8V9W0X",
     "x0Y1Z2A3B4C", "x0D5E6F7G8H", "x0I9J0K1L2M", "x0N3O4P5Q6R", "x0S7T8U9V0W",
     "x0X1Y2Z3A4B", "x0C5D6E7F8G", "x0H9I0J1K2L", "x0M3N4O5P6Q", "x0R7S8T9U0V",
@@ -130,7 +130,7 @@ def enter_num():
         elif choice == '4':
             path_discovery()
         elif choice == '5':
-            print_colored("Goodby",Fore.MAGENTA)
+            print_colored("Goodby,Best regards MR 𝗢𝗹𝗱 ..",Fore.MAGENTA)
             sys.exit()
             break  # Exit the loop after valid input
         else:
@@ -1256,17 +1256,24 @@ def nmap_scan():
         except socket.gaierror:
             print_colored("Invalid URL or IP address. Please enter a valid target.", Fore.RED)
             continue
-        
+
+        # سؤال المستخدم عن تحديد عدد البورتات
+        port_range_choice = input(Fore.YELLOW + "Do you want to specify the port range to scan? (Yes/y or No/n): \n" + Style.RESET_ALL).strip().lower()
+        if port_range_choice == 'yes' or port_range_choice == 'y':
+            ports = input(Fore.YELLOW + "Enter the port range (e.g., 1-300 or 400-700): \n" + Style.RESET_ALL).strip()
+        else:
+            ports = "1-65535"  # افتراض فحص جميع المنافذ
+
         if choice == '1':
             print_colored("Starting deep vulnerability scan...", Fore.GREEN)
-            os.system(f"nmap --stats-every 15s -v -n -p- -sT -f -A --script vulners --script=vuln {ip_address}")
+            os.system(f"nmap --stats-every 15s -T4 -sS -sV -f -A -Pn --open --script=vulners,vuln --min-hostgroup 64 --min-parallelism 32 -p {ports} {ip_address}")
         elif choice == '2':
             print_colored("Starting medium vulnerability scan...", Fore.GREEN)
-            os.system(f"nmap --stats-every 15s -T5 -sS -sV -f -A -Pn {ip_address}")
+            os.system(f"nmap --stats-every 15s -T5 -sS -sV --open --min-hostgroup 32 --min-parallelism 16 -p {ports} {ip_address}")
         elif choice == '3':
             command = input(Fore.YELLOW + "Enter Nmap command: \n" + Style.RESET_ALL)
             print_colored("Starting custom Nmap scan...", Fore.GREEN)
-            os.system(f"nmap {command} {ip_address}")
+            os.system(f"nmap {command} -p {ports} {ip_address}")
 
         return_to_menu()
 
