@@ -1260,7 +1260,13 @@ def nmap_scan():
         # سؤال المستخدم عن تحديد عدد البورتات
         port_range_choice = input(Fore.YELLOW + "Do you want to specify the port range to scan? (Yes/y or No/n): \n" + Style.RESET_ALL).strip().lower()
         if port_range_choice == 'yes' or port_range_choice == 'y':
-            ports = input(Fore.YELLOW + "Enter the port range (e.g., 1-300): \n" + Style.RESET_ALL).strip()
+            while True:
+                ports = input(Fore.YELLOW + "Enter the port range (e.g., 1-300): \n" + Style.RESET_ALL).strip()
+                # التحقق من تنسيق البورتات
+                if '-' in ports and all(part.isdigit() for part in ports.split('-')) and len(ports.split('-')) == 2:
+                    break
+                else:
+                    print_colored("Invalid format! Please enter the port range in the format 'start-end'.", Fore.RED)
         else:
             ports = "1-65535"  # افتراض فحص جميع المنافذ
 
@@ -1288,18 +1294,17 @@ def nmap_scan():
         # سؤال المستخدم إذا كان يريد حفظ التقرير
         save_report = input(Fore.YELLOW + "Do you want to save the report in a txt file? (Yes/y or No/n): \n" + Style.RESET_ALL).strip().lower()
         if save_report == 'yes' or save_report == 'y':
-            if os.path.exists('nmap_scan_report.txt'):
-                while True:
-                    file_name = input(Fore.YELLOW + "Enter the file name (without .txt): \n" + Style.RESET_ALL).strip()
-                    if file_name.endswith('.txt'):
-                        print_colored("File name should not include .txt. Please enter a valid name.", Fore.RED)
-                    else:
-                        file_name += '.txt'
-                        os.rename('nmap_scan_report.txt', file_name)
-                        print_colored(f"Report saved successfully as: {os.path.abspath(file_name)}", Fore.GREEN)
-                        break  # الخروج من حلقة إدخال اسم الملف
-            else:
-                print_colored("No report file found to save.", Fore.RED)
+            while True:
+                file_name = input(Fore.YELLOW + "Enter the file name (without .txt): \n" + Style.RESET_ALL).strip()
+                if file_name.endswith('.txt'):
+                    print_colored("File name should not include .txt. Please enter a valid name.", Fore.RED)
+                else:
+                    file_name += '.txt'
+                    with open(file_name, 'w') as report_file:
+                        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        report_file.write(process.stdout.read().decode())
+                    print_colored(f"Report saved successfully as: {os.path.abspath(file_name)}", Fore.GREEN)
+                    break  # الخروج من حلقة إدخال اسم الملف
 
         # خيارات العودة
         while True:
