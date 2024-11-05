@@ -1264,17 +1264,26 @@ def nmap_scan():
         else:
             ports = "1-65535"  # افتراض فحص جميع المنافذ
 
-        # بدء الفحص
+        # بدء الفحص باستخدام subprocess لتظهر النتائج مباشرة
         if choice == '1':
             print_colored("Starting deep vulnerability scan...", Fore.GREEN)
-            os.system(f"nmap --stats-every 15s -T4 -sS -sV -f -A -Pn --open --script=vulners,vuln --min-hostgroup 64 --min-parallelism 32 -p {ports} {ip_address} > nmap_scan_report.txt")
+            command = f"nmap --stats-every 15s -T4 -sS -sV -f -A -Pn --open --script=vulners,vuln --min-hostgroup 64 --min-parallelism 32 -p {ports} {ip_address}"
         elif choice == '2':
             print_colored("Starting medium vulnerability scan...", Fore.GREEN)
-            os.system(f"nmap --stats-every 15s -T5 -sS -sV --open --min-hostgroup 32 --min-parallelism 16 -O -p {ports} {ip_address} > nmap_scan_report.txt")
+            command = f"nmap --stats-every 15s -T5 -sS -sV --open --min-hostgroup 32 --min-parallelism 16 -O -p {ports} {ip_address}"
         elif choice == '3':
             command = input(Fore.YELLOW + "Enter Nmap command: \n" + Style.RESET_ALL)
             print_colored("Starting custom Nmap scan...", Fore.GREEN)
-            os.system(f"nmap {command} -p {ports} {ip_address} > nmap_scan_report.txt")
+            command = f"nmap {command} -p {ports} {ip_address}"
+
+        # تنفيذ الأمر وعرض النتائج بشكل فوري
+        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        while True:
+            output = process.stdout.readline()
+            if output == b"" and process.poll() is not None:
+                break
+            if output:
+                print(output.decode().strip())
 
         # سؤال المستخدم إذا كان يريد حفظ التقرير
         save_report = input(Fore.YELLOW + "Do you want to save the report in a txt file? (Yes/y or No/n): \n" + Style.RESET_ALL).strip().lower()
