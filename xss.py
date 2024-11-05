@@ -1273,7 +1273,11 @@ def nmap_scan():
         # بدء الفحص باستخدام subprocess لتظهر النتائج مباشرة
         if choice == '1':
             print_colored("Starting deep vulnerability scan...", Fore.GREEN)
-            command = f"nmap --stats-every 15s -T4 -sS -sV -O -f -A -Pn --open --script=vulners,vuln,http-enum,ssl-enum-ciphers,nmap-vulners --min-hostgroup 64 --min-parallelism 32 -p {ports} {ip_address}"
+            command = f"nmap --stats-every 15s -T5 -sS -sV -O -A -Pn -f --open \
+--script=vulners,vuln,http-enum,ssl-enum-ciphers,nmap-vulners \
+--min-hostgroup 128 --min-parallelism 64 --max-retries 1 \
+--script-timeout 60s --max-scan-delay 20ms --max-rate 5000 \
+--min-rate 1000 -p {ports} {ip_address}"
         elif choice == '2':
             print_colored("Starting medium vulnerability scan...", Fore.GREEN)
             command = f"nmap --stats-every 15s -T5 -sS -sV --open --min-hostgroup 32 --min-parallelism 16 -O -p {ports} {ip_address}"
