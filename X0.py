@@ -1145,6 +1145,8 @@ def save_report(url, report_text):
 
 
 def print_colored(text, color):
+    if text is None:
+        text = "No result available"
     print(color + text + Style.RESET_ALL)
 
 def get_tool_path(tool_name):
@@ -1152,9 +1154,6 @@ def get_tool_path(tool_name):
         return f"/usr/local/bin/{tool_name}"
     else:
         return f"/data/data/com.termux/files/home/bin/{tool_name}"
-
-def print_colored(text, color):
-    print(color + text + Style.RESET_ALL)
 
 def check_url_validity():
     print(Fore.YELLOW + "Enter target URL (include 'http://' or 'https://'):")
