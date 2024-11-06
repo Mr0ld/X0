@@ -785,12 +785,11 @@ def get_real_ip(domain):
         print_colored(f"Failed to resolve IP: {e}", Fore.GREEN)
         return None
 
-# دالة لجمع المعلومات عن الموقع
 def gather_info(url):
     report = []  # متغير لتخزين التقرير النهائي
 
     domain = url.replace('http://', '').replace('https://', '')
-    ip = socket.gethostbyname(domain)
+    ip = socket.gethostbyname(domain) if domain else "No result available"
     
     report.append(f"Collect information about this site: {url}")
     print_colored("========================================", Fore.RED)
@@ -805,7 +804,7 @@ def gather_info(url):
     print_colored(f"{ip}", Fore.GREEN)
     print_colored("========================================", Fore.CYAN)
 
-    ssl_info = check_ssl(domain)
+    ssl_info = check_ssl(domain) or "No result available"
     report.append(f"SSL Certificate Expiry: {ssl_info}")
     report.append("========================================")
     print_colored(f"SSL Certificate Expiry : ", Fore.MAGENTA)
@@ -820,75 +819,75 @@ def gather_info(url):
     print_colored(f" {ws}", Fore.GREEN)
     print_colored("========================================", Fore.CYAN)
 
-    tcms = detect_cms(requests.get(url).text, url)
+    tcms = detect_cms(requests.get(url).text, url) or "No result available"
     report.append(f"CMS : {tcms}")
     report.append("========================================")
     print_colored("CMS :", Fore.MAGENTA)
     print_colored(f"{tcms}", Fore.GREEN)
     print_colored("========================================", Fore.CYAN)
 
-    cloudflare_status = check_cloudflare(domain)
+    cloudflare_status = check_cloudflare(domain) or "No result available"
     report.append(f"Cloudflare: {cloudflare_status}")
     report.append("========================================")
     print_colored(f"Cloudflare : ", Fore.MAGENTA)
     print_colored(f" {cloudflare_status}", Fore.GREEN)
     print_colored("========================================", Fore.CYAN)
 
-    robots_content = check_robots(url)
+    robots_content = check_robots(url) or "No result available"
     report.append(f"Robots File:\n{robots_content}")
     report.append("========================================")
     print_colored("Robots File:", Fore.GREEN)
     print_colored(robots_content, Fore.LIGHTYELLOW_EX)
     print_colored("========================================", Fore.CYAN)
 
-    whois_data = check_whois(domain)
+    whois_data = check_whois(domain) or "No result available"
     report.append(f"WHOIS Lookup:\n{whois_data}")
     report.append("========================================")
     print_colored(f"WHOIS Lookup :", Fore.MAGENTA)
     print_colored(f"{whois_data}", Fore.GREEN)
     print_colored("========================================", Fore.CYAN)
 
-    geoip_data = check_geoip(domain)
+    geoip_data = check_geoip(domain) or "No result available"
     report.append(f"GEO IP Lookup:\n{geoip_data}")
     report.append("========================================")
     print_colored(f"GEO IP Lookup :", Fore.MAGENTA)
     print_colored(f"{geoip_data}", Fore.GREEN)
     print_colored("========================================", Fore.CYAN)
 
-    dns_data = check_dns(domain)
+    dns_data = check_dns(domain) or "No result available"
     report.append(f"DNS Lookup:\n{dns_data}")
     report.append("========================================")
     print_colored(f"DNS Lookup :", Fore.MAGENTA)
     print_colored(f"{dns_data}", Fore.GREEN)
     print_colored("========================================", Fore.CYAN)
 
-    subnet_data = check_subnet(domain)
+    subnet_data = check_subnet(domain) or "No result available"
     report.append(f"Subnet Calculation:\n{subnet_data}")
     report.append("========================================")
     print_colored(f"Subnet Calculation :", Fore.MAGENTA)
     print_colored(f"{subnet_data}", Fore.GREEN)
     print_colored("========================================", Fore.CYAN)
 
-    js_files = analyze_js(url)
+    js_files = analyze_js(url) or "No result available"
     report.append(f"JavaScript files:\n{js_files}")
     report.append("========================================")
     print_colored(f"JavaScript files :", Fore.MAGENTA)
     print_colored(f"{js_files}", Fore.GREEN)
     print_colored("========================================", Fore.CYAN)
 
-    security_headers = check_security_headers(wsheaders)
+    security_headers = check_security_headers(wsheaders) or "No result available"
     report.append("Security Headers:\n" + security_headers)
     report.append("========================================")
     print_colored("Security Headers:\n" + security_headers, Fore.CYAN)
     print_colored("========================================", Fore.CYAN)
 
-    emails_phones = extract_emails_and_phones(url)
+    emails_phones = extract_emails_and_phones(url) or "No result available"
     report.append(emails_phones)
     report.append("========================================")
     print_colored(emails_phones, Fore.CYAN)
     print_colored("========================================", Fore.CYAN)
 
-    port_scan_result = start_port_check(ip)
+    port_scan_result = start_port_check(ip) or "No result available"
     report.append(port_scan_result)
     report.append("========================================")
     print_colored(port_scan_result, Fore.GREEN)
